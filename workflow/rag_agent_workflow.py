@@ -83,7 +83,7 @@ def agent_reasoner(state: AgentState) -> Dict:
     
     # 1. 메시지 구성
     existing_messages = state.get("messages", [])
-    messages_to_invoke = list(existing_messages)
+    messages_to_invoke = list(existing_messages) # type: ignore
 
     if not messages_to_invoke:
         # 첫 실행: 시스템 메시지 + 사용자 메시지 생성

@@ -96,7 +96,7 @@ if __name__ == "__main__":
         # 워크플로우 실행
         print("🚀 워크플로우 실행 시작...\n")
         final_state = app_part2.invoke(
-            initial_state,
+            initial_state, # type: ignore
             config={"recursion_limit": 50}  # 재귀 제한 증가
         )  # type: ignore
         
