@@ -1,0 +1,11 @@
+**/__pycache__
+**/chroma
+**/filtered_data
+**/generator_venv
+**/venv
+
+.env
+.vscode
+*.txt
+
+!requirements.txt

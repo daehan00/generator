@@ -1,0 +1,16 @@
+pydantic
+unknown-data
+dotenv
+pandas
+python-dateutil
+
+langchain
+langchain_core
+langgraph
+langchain_chroma
+langchain_google_genai
+langchain_openai
+langchain_tavily
+chromadb
+
+ipykernel
