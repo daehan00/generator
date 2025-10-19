@@ -13,7 +13,7 @@ from workflow.classes import AgentState
 from workflow.database import save_data_node
 from workflow.requirements_node import analyze_requirements_node
 from workflow.tools import agent_tools, ToolContext, get_metadata_info, format_metadata_section
-from workflow.prompts import AGENT_SYSTEM_PROMPT, SCENARIO_GENERATOR_SYSTEM_PROMPT  # 시스템 프롬프트 import
+from workflow.prompts import AGENT_SYSTEM_PROMPT, SCENARIO_GENERATOR_SYSTEM_PROMPT, CLASSIFY_PROMPT
 from common.models import ScenarioCreate
 from common.utils import llm_large
 
@@ -253,6 +253,30 @@ def scenario_generator(state: AgentState) -> Dict:
         )
         return {"final_report": fallback_report}
 
+def classify_data(state: AgentState) -> Dict:
+    """
+    (워크플로우 4단계) 누적된 메시지 정보들을 바탕으로 나온 마지막 결론을 행위 기준으로 분류합니다.
+    """
+    print("--- 📝 Node: 데이터 분류 중 ---")
+    messages = state.get("messages") or []
+    analysis_failed = state.get("analysis_failed", False)
+
+    if analysis_failed:
+        context = ""
+        return {"context": context}
+    
+    try:
+        response = llm_large.invoke([HumanMessage(content=CLASSIFY_PROMPT), *messages])
+        context = response.content
+        return {"context": context}
+    except Exception as e:
+        print(f"  ❌ 분류 데이터 생성 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
+        context = ""
+        return {"context": context}
+
+
 # --------------------------------------------------------------------------
 # 5. 제어 흐름(Router) 정의
 # --------------------------------------------------------------------------
@@ -308,28 +332,29 @@ tool_node = ToolNode(agent_tools)
 workflow = StateGraph(AgentState)
 
 # 노드 추가
-workflow.add_node("recursive_filter", recursive_filter_node)  # 🆕 직접 사용
-workflow.add_node("extract_artifacts", extract_filtered_artifacts)
-workflow.add_node("save_data", save_data_node)
-workflow.add_node("analyze_requirements", analyze_requirements_node)  # 🆕 요구사항 분석
-workflow.add_node("agent", agent_reasoner)
-workflow.add_node("tools", tool_node)
-workflow.add_node("scenario_generator", scenario_generator)
+workflow.add_node("filter_artifacts", recursive_filter_node)  # 아티팩트 필터링
+workflow.add_node("extract_results", extract_filtered_artifacts)  # 필터링 결과 추출
+workflow.add_node("save_data", save_data_node)  # 데이터 저장
+workflow.add_node("analyze_requirements", analyze_requirements_node)  # 요구사항 분석
+workflow.add_node("agent_reasoner", agent_reasoner)  # 에이전트 추론
+workflow.add_node("execute_tools", tool_node)  # 도구 실행
+workflow.add_node("generate_scenario", scenario_generator)  # 시나리오 생성
+workflow.add_node("classify_results", classify_data)  # 결과 분류
 
 # 엣지(연결 흐름) 설정
-workflow.set_entry_point("recursive_filter")
+workflow.set_entry_point("filter_artifacts")
 
 # 🆕 재귀 필터링 조건부 엣지
 workflow.add_conditional_edges(
-    "recursive_filter",
+    "filter_artifacts",
     should_continue_filtering,
     {
-        "continue": "recursive_filter",  # 필터링 반복
-        "synthesize": "extract_artifacts"  # 다음 단계로
+        "continue": "filter_artifacts",  # 필터링 반복
+        "synthesize": "extract_results"  # 다음 단계로
     }
 )
 
-workflow.add_edge("extract_artifacts", "save_data")  # 아티팩트 추출 후 데이터 저장
+workflow.add_edge("extract_results", "save_data")  # 아티팩트 추출 후 데이터 저장
 
 # [수정] 데이터 저장 후, 결과에 따라 분기하는 조건부 엣지 추가
 workflow.add_conditional_edges(
@@ -341,19 +366,20 @@ workflow.add_conditional_edges(
     }
 )
 
-workflow.add_edge("analyze_requirements", "agent")  # 요구사항 분석 후 에이전트 시작
+workflow.add_edge("analyze_requirements", "agent_reasoner")  # 요구사항 분석 후 에이전트 시작
 
 workflow.add_conditional_edges(
-    "agent",
+    "agent_reasoner",
     router,
     {
-        "tools": "tools",
-        "generate_scenario": "scenario_generator",
-        "continue": "agent", # 계속 생각
+        "tools": "execute_tools",
+        "generate_scenario": "generate_scenario",
+        "continue": "agent_reasoner", # 계속 생각
     }
 )
-workflow.add_edge("tools", "agent") # 도구 사용 후 다시 생각
-workflow.add_edge("scenario_generator", END) # 보고서 생성 후 종료
+workflow.add_edge("execute_tools", "agent_reasoner") # 도구 사용 후 다시 생각
+workflow.add_edge("generate_scenario", "classify_results") 
+workflow.add_edge("classify_results", END) 
 
 # 그래프 컴파일
 app = workflow.compile()

@@ -14,6 +14,7 @@ from workflow.tools import agent_tools
 from workflow.rag_agent_workflow import (
     agent_reasoner,
     scenario_generator,
+    classify_data,
     router
 )
 
@@ -30,27 +31,29 @@ workflow_part2 = StateGraph(AgentState)
 
 # 노드 추가
 workflow_part2.add_node("analyze_requirements", analyze_requirements_node)
-workflow_part2.add_node("agent", agent_reasoner)
-workflow_part2.add_node("tools", tool_node)
-workflow_part2.add_node("scenario_generator", scenario_generator)
+workflow_part2.add_node("agent_reasoner", agent_reasoner)
+workflow_part2.add_node("execute_tools", tool_node)
+workflow_part2.add_node("generate_scenario", scenario_generator)
+workflow_part2.add_node("classify_results", classify_data)
 
 # 엣지(연결 흐름) 설정
 workflow_part2.set_entry_point("analyze_requirements")
 
-workflow_part2.add_edge("analyze_requirements", "agent")
+workflow_part2.add_edge("analyze_requirements", "agent_reasoner")
 
 workflow_part2.add_conditional_edges(
-    "agent",
+    "agent_reasoner",
     router,
     {
-        "tools": "tools",
-        "generate_scenario": "scenario_generator",
-        "continue": "agent",
+        "tools": "execute_tools",
+        "generate_scenario": "generate_scenario",
+        "continue": "agent_reasoner",
     }
 )
 
-workflow_part2.add_edge("tools", "agent")
-workflow_part2.add_edge("scenario_generator", END)
+workflow_part2.add_edge("execute_tools", "agent_reasoner")
+workflow_part2.add_edge("generate_scenario", "classify_results")
+workflow_part2.add_edge("classify_results", END)
 
 # 그래프 컴파일
 app_part2 = workflow_part2.compile()

@@ -25,24 +25,24 @@ from workflow.rag_agent_workflow import extract_filtered_artifacts, check_save_s
 workflow_part1 = StateGraph(AgentState)
 
 # 노드 추가
-workflow_part1.add_node("recursive_filter", recursive_filter_node)
-workflow_part1.add_node("extract_artifacts", extract_filtered_artifacts)
+workflow_part1.add_node("filter_artifacts", recursive_filter_node)
+workflow_part1.add_node("extract_results", extract_filtered_artifacts)
 workflow_part1.add_node("save_data", save_data_node)
 
 # 엣지(연결 흐름) 설정
-workflow_part1.set_entry_point("recursive_filter")
+workflow_part1.set_entry_point("filter_artifacts")
 
 # 재귀 필터링 조건부 엣지
 workflow_part1.add_conditional_edges(
-    "recursive_filter",
+    "filter_artifacts",
     should_continue_filtering,
     {
-        "continue": "recursive_filter",  # 필터링 반복
-        "synthesize": "extract_artifacts"  # 다음 단계로
+        "continue": "filter_artifacts",  # 필터링 반복
+        "synthesize": "extract_results"  # 다음 단계로
     }
 )
 
-workflow_part1.add_edge("extract_artifacts", "save_data")
+workflow_part1.add_edge("extract_results", "save_data")
 workflow_part1.add_edge("save_data", END)
 
 # # 데이터 저장 후 종료

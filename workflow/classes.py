@@ -67,6 +67,7 @@ class AgentState(TypedDict, total=False):
     
     # -- 3단계: 최종 결과 --
     final_report: Optional[ScenarioCreate]  # 최종 분석 보고서
+    context: Optional[str]
 
 
 class Artifact(BaseModel):

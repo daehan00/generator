@@ -63,17 +63,17 @@ class TestBackendClient:
                     "ip": "192.168.74.135",
                     "pc_username": "김민재",
                     "pc_userrank": "사원",
-                    "pc_userbusinessnum": "바보",
+                    "pc_userbusinessnum": "2025031689",
                     "pc_userdepartment": "개발팀",
-                    "pc_usercompanyname": "바보"
+                    "pc_usercompanyname": "HM Company"
                 },
                 "tasks": [
                     {
                         "id": "218df7d9-dd19-4777-bdd8-0863d8d776e6",
                         "type": "generate",
-                        "status": "completed",
+                        "status": "running",
                         "started_at": "2025-09-23T04:56:19",
-                        "ended_at": "2025-09-23T04:56:19",
+                        "ended_at": "",
                         "retry_count": 0,
                         "error_message": None
                     },
