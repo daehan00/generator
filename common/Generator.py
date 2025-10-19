@@ -1,9 +1,10 @@
-from typing import List
+from typing import Any, List
 from common.test_backendclient import TestBackendClient as BackendClient
 from common.agent import invoke_report_details_test, invoke_scenarios_test
+from common.agent import invoke_scenarios
+from common.report_exporters import invoke_report_details
 from common.models import SectionTypeEnum, ReportCreate, ReportDetailCreate
 from common.models import ScenarioCreate
-
 
 class Generator:
     def __init__(self) -> None:
@@ -15,7 +16,7 @@ class Generator:
 
     def generate_report(self, task_id: str, job_id: str, artifacts: List[dict], job_info: dict, backend_client: BackendClient):
         # 1. artifacts를 분석하고, 시나리오 생성
-        self._generate_scenarios(artifacts, task_id, job_id)
+        self._generate_scenarios(artifacts, task_id, job_id, job_info)
 
         # 2. 생성된 시나리오 데이터베이스에 저장
         scenario_saved = backend_client.save_scenario(self.scenario)
@@ -36,10 +37,11 @@ class Generator:
         # 6. 보고서 pdf 처리
         self._generate_pdf_report()
 
-    def _generate_scenarios(self, artifacts, task_id: str, job_id: str) -> None:
+    def _generate_scenarios(self, artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> None:
         # 1. llm service를 호출해서 시나리오 생성
-        result = invoke_scenarios_test(artifacts, task_id, job_id)
+        result, context = invoke_scenarios(artifacts, task_id, job_id, job_info)
         self.scenario = result
+        self.context = context
 
     def _generate_report_details(self, job_info: dict, task_id: str):
         self.report = ReportCreate(
@@ -52,17 +54,21 @@ class Generator:
 
         data = {
             "job_info": job_info,
-            "context": "",
+            "context": self.context,
             "scenario": self.scenario
         }
         # 내용 생성 -> self.report_details에 업데이트
         for sectiontype in SectionTypeEnum:
-            report_detail = invoke_report_details_test(sectiontype, data)
-            if not report_detail:
+            content = invoke_report_details(sectiontype, data)
+            if not content:
                 print(f"There is no detail data in section {sectiontype.value}")
                 continue
 
-            self.report.details.extend(report_detail)
+            self.report.details.append(ReportDetailCreate(
+                section_type=sectiontype,
+                content=content,
+                order_no=None
+            ))
 
     def _generate_pdf_report(self):
         pass
