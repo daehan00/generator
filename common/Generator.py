@@ -49,9 +49,15 @@ class Generator:
             task_id=task_id,
             details=[]
         )
+
+        data = {
+            "job_info": job_info,
+            "context": "",
+            "scenario": self.scenario
+        }
         # 내용 생성 -> self.report_details에 업데이트
         for sectiontype in SectionTypeEnum:
-            report_detail = invoke_report_details_test(sectiontype, job_info)
+            report_detail = invoke_report_details_test(sectiontype, data)
             if not report_detail:
                 print(f"There is no detail data in section {sectiontype.value}")
                 continue
