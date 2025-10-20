@@ -1,7 +1,7 @@
 from workflow.classes import AgentState, ChunkAnalysisResult, FilterResult
 from workflow.prompts import FILTER_PROMPT
+from workflow.utils import chunk_artifacts, llm_small
 from langchain_core.prompts import ChatPromptTemplate
-from common.utils import llm_small, chunk_artifacts
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, cast

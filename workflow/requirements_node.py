@@ -4,7 +4,7 @@
 """
 import json
 from typing import Dict
-from common.utils import llm_medium
+from workflow.utils import llm_medium
 
 
 def analyze_requirements_node(state) -> Dict[str, str]:

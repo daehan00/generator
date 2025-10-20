@@ -61,11 +61,11 @@ class TestBackendClient:
                     "status": None,
                     "os": "Windows 11 Version 24H2",
                     "ip": "192.168.74.135",
-                    "pc_username": "김민재",
-                    "pc_userrank": "사원",
+                    "pc_username": "이정호",
+                    "pc_userrank": "주임",
                     "pc_userbusinessnum": "2025031689",
-                    "pc_userdepartment": "개발팀",
-                    "pc_usercompanyname": "HM Company"
+                    "pc_userdepartment": "교육운영팀",
+                    "pc_usercompanyname": "한국정보보호산업협회"
                 },
                 "tasks": [
                     {

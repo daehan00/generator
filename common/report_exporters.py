@@ -1,6 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv("/Users/dhkim/Desktop/Unkown/generator/.env")
-
 import json
 import sys
 import os
@@ -95,7 +92,6 @@ def register_exporters(index: int) -> Callable[[ExportFn], ExportFn]:
 @register_exporters(0)
 def export_0(data: Data) -> ReturnData:
     """분석 목적 생성"""
-    print(PROMPT_0)
     return {"content": PROMPT_0}
 
 
@@ -103,7 +99,6 @@ def export_0(data: Data) -> ReturnData:
 def export_1(data: Data) -> ReturnData:
     """데이터 수집 생성"""
     result = create_llm_exporter(PROMPT_1, ["job_info"])(data)
-    print(result.get("content"))
     return result
 
 
@@ -111,21 +106,18 @@ def export_1(data: Data) -> ReturnData:
 def export_2(data: Data) -> ReturnData:
     """분석 일정 생성"""
     result = create_llm_exporter(PROMPT_2, ["job_info"])(data)
-    print(result.get("content"))
     return result
 
 
 @register_exporters(3)
 def export_3(data: Data) -> ReturnData:
     """분석 방법 및 절차 -> 고정된 문장 그대로 리턴."""
-    print(PROMPT_3)
     return {"content": PROMPT_3}
 
 
 @register_exporters(4)
 def export_4(data: Data) -> ReturnData:
     """분석 방법 및 절차 -> 고정된 문장 그대로 리턴."""
-    print(PROMPT_4)
     return {"content": PROMPT_4}
 
 
@@ -133,7 +125,6 @@ def export_4(data: Data) -> ReturnData:
 def export_5(data: Data) -> ReturnData:
     """분석 요약"""
     result = create_llm_exporter(PROMPT_5, ["context"], llm=llm_large)(data)
-    print(result.get("content"))
     return result
 
 
@@ -141,7 +132,6 @@ def export_5(data: Data) -> ReturnData:
 def export_6(data: Data) -> ReturnData:
     """취득 행위"""
     result = create_llm_exporter(PROMPT_6, ["context"])(data)
-    print(result.get("content"))
     return result
 
 
@@ -149,7 +139,6 @@ def export_6(data: Data) -> ReturnData:
 def export_7(data: Data) -> ReturnData:
     """유출 행위"""
     result = create_llm_exporter(PROMPT_7, ["context"], llm=llm_large)(data)
-    print(result.get("content"))
     return result
 
 
@@ -157,7 +146,6 @@ def export_7(data: Data) -> ReturnData:
 def export_8(data: Data) -> ReturnData:
     """증거 인멸 행위"""
     result = create_llm_exporter(PROMPT_8, ["context"])(data)
-    print(result.get("content"))
     return result
 
 
@@ -165,7 +153,6 @@ def export_8(data: Data) -> ReturnData:
 def export_9(data: Data) -> ReturnData:
     """결론 - 확인된 사실"""
     result = create_llm_exporter(PROMPT_9, ["context"])(data)
-    print(result.get("content"))
     return result
 
 
@@ -173,7 +160,6 @@ def export_9(data: Data) -> ReturnData:
 def export_10(data: Data) -> ReturnData:
     """결론 - 재구성, 종합 의견"""
     result = create_llm_exporter(PROMPT_10, ["context", "scenario"], llm=llm_large)(data)
-    print(result.get("content"))
     return result
 
 
@@ -212,6 +198,7 @@ if __name__ == "__main__":
 
     for i in range(11):
         content = invoke_report_details(i, data)
+        print(content)
         detail = {
             "id": f"id_{i}",
             "section_type": i,

@@ -9,13 +9,12 @@ from workflow.filter_node import (
     recursive_filter_node,
     should_continue_filtering
 )
-from workflow.classes import AgentState
+from workflow.classes import AgentState, ScenarioCreate
 from workflow.database import save_data_node
 from workflow.requirements_node import analyze_requirements_node
 from workflow.tools import agent_tools, ToolContext, get_metadata_info, format_metadata_section
 from workflow.prompts import AGENT_SYSTEM_PROMPT, SCENARIO_GENERATOR_SYSTEM_PROMPT, CLASSIFY_PROMPT
-from common.models import ScenarioCreate
-from common.utils import llm_large
+from workflow.utils import llm_large
 
 # --------------------------------------------------------------------------
 # LLM 및 도구 설정

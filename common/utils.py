@@ -1,18 +1,17 @@
 """
 유틸리티 함수 모듈
-- 아티팩트 로딩 및 청크 분할
-- 보고서 출력
-- 청크 사이즈 최적화
-"""
 
+"""
+import os
 from typing import List
 from common.test_backendclient import TestBackendClient
 from common.models import ScenarioCreate
-from langchain.chat_models import init_chat_model
-
 
 from dotenv import load_dotenv
-load_dotenv("../.env")
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
+
+from langchain.chat_models import init_chat_model
 
 # LLM 초기화
 llm_small = init_chat_model("google_genai:gemini-2.5-flash-lite", temperature=0)
@@ -24,11 +23,6 @@ def load_artifacts(task_id: str) -> List[dict]:
     backend_client = TestBackendClient()
     job_id = "test+job_id"
     return backend_client.load_artifacts(task_id, job_id)
-
-
-def chunk_artifacts(artifacts: List[dict], chunk_size: int = 50) -> List[List[dict]]:
-    """아티팩트를 청크로 분할"""
-    return [artifacts[i:i+chunk_size] for i in range(0, len(artifacts), chunk_size)]
 
 
 def pretty_print_scenario(scenario: ScenarioCreate):
@@ -68,35 +62,3 @@ def pretty_print_scenario(scenario: ScenarioCreate):
     print("\n" + "="*80)
 
 
-def calculate_optimal_chunk_size(total_artifacts: int, target_chunks: int = 100) -> int:
-    """
-    아티팩트 총 개수에 따라 최적의 청크 사이즈 계산
-    
-    Args:
-        total_artifacts: 전체 아티팩트 개수
-        target_chunks: 목표 청크 개수 (기본 100개)
-        
-    Returns:
-        최적화된 청크 사이즈
-    """
-    # 목표 청크 개수로 나눈 값
-    calculated_size = total_artifacts // target_chunks
-    
-    # 최소/최대 제한 설정
-    min_chunk_size = 500   # 너무 작으면 비효율
-    max_chunk_size = 2000  # 너무 크면 토큰 초과 위험
-    
-    # 범위 내로 조정
-    optimal_size = max(min_chunk_size, min(calculated_size, max_chunk_size))
-    
-    # 실제 청크 개수 계산
-    actual_chunks = (total_artifacts + optimal_size - 1) // optimal_size
-    
-    print(f"📊 청크 사이즈 최적화 결과:")
-    print(f"  - 전체 아티팩트: {total_artifacts:,}개")
-    print(f"  - 청크 사이즈: {optimal_size}개")
-    print(f"  - 예상 청크 개수: {actual_chunks}개")
-    print(f"  - Map 단계 LLM 호출: {actual_chunks}번")
-    print(f"  - 예상 처리 시간: ~{actual_chunks * 2.5:.0f}초 (약 {actual_chunks * 2.5 / 60:.1f}분)")
-    
-    return optimal_size
