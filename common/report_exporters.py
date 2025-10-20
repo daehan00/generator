@@ -15,14 +15,14 @@ try:
     # 모듈로 임포트될 때 (from common.report_exporters import ...)
     from .report_prompts import (
         SYSTEM_PROMPT, PROMPT_0, PROMPT_1, PROMPT_2, PROMPT_3, PROMPT_4,
-        PROMPT_5, PROMPT_6, PROMPT_7, PROMPT_8, PROMPT_9, PROMPT_10
+        PROMPT_5, PROMPT_6, PROMPT_7, PROMPT_8, PROMPT_9, PROMPT_10, PROMPT_11
     )
     from .utils import llm_medium, llm_large
 except ImportError:
     # 직접 실행될 때 (python report_exporters.py)
     from common.report_prompts import (
         SYSTEM_PROMPT, PROMPT_0, PROMPT_1, PROMPT_2, PROMPT_3, PROMPT_4,
-        PROMPT_5, PROMPT_6, PROMPT_7, PROMPT_8, PROMPT_9, PROMPT_10
+        PROMPT_5, PROMPT_6, PROMPT_7, PROMPT_8, PROMPT_9, PROMPT_10, PROMPT_11
     )
     from common.utils import llm_medium, llm_large
 
@@ -151,15 +151,24 @@ def export_8(data: Data) -> ReturnData:
 
 @register_exporters(9)
 def export_9(data: Data) -> ReturnData:
-    """결론 - 확인된 사실"""
+    """기타 의심 행위"""
     result = create_llm_exporter(PROMPT_9, ["context"])(data)
+    if result["content"].lower() == "none":
+        return {"content": None}
     return result
 
 
 @register_exporters(10)
 def export_10(data: Data) -> ReturnData:
+    """결론 - 확인된 사실"""
+    result = create_llm_exporter(PROMPT_10, ["context"])(data)
+    return result
+
+
+@register_exporters(11)
+def export_11(data: Data) -> ReturnData:
     """결론 - 재구성, 종합 의견"""
-    result = create_llm_exporter(PROMPT_10, ["context", "scenario"], llm=llm_large)(data)
+    result = create_llm_exporter(PROMPT_11, ["context", "scenario"], llm=llm_large)(data)
     return result
 
 
@@ -180,7 +189,7 @@ if __name__ == "__main__":
     except ImportError:
         from test.export_test import data
 
-    # invoke_report_details(7, data)
+    # print(invoke_report_details(9, data))
 
     result = {
         "report": {
@@ -196,7 +205,7 @@ if __name__ == "__main__":
         "details": []
     }
 
-    for i in range(11):
+    for i in range(12):
         content = invoke_report_details(i, data)
         print(content)
         detail = {

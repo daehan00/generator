@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict
 from unknown_data import Category, ResultDataFrames, ResultDataFrame
 
-from test.Analyzer import BackendClient, Analyzer
+from Analyzer import BackendClient, Analyzer
 
 
 

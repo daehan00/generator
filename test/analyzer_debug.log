@@ -1,0 +1,261 @@
+2025-10-20 21:46:42,475 - testAnalyzer - INFO - 🚀 [TEST] Starting final test for task: session-20250930-060607-59984faf
+2025-10-20 21:46:42,475 - Analyzer - DEBUG - 🔄 Processing category: BROWSER
+2025-10-20 21:46:43,213 - Analyzer - DEBUG - Filtering data for category: BROWSER
+2025-10-20 21:46:43,217 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_visit_time' contributed 1519 valid rows for filtering.
+2025-10-20 21:46:43,236 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.urls: 1629 -> 1519 rows. Keeping file.
+2025-10-20 21:46:43,241 - DevAnaly - DEBUG - ⏰ [DEV] Column 'visit_time' contributed 3222 valid rows for filtering.
+2025-10-20 21:46:43,244 - DevAnaly - INFO - 🗑️ [DEV] Row filtering: 3222 -> 2700 rows
+2025-10-20 21:46:43,244 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.visits: 3222 -> 2700 rows. Keeping file.
+2025-10-20 21:46:43,245 - DevAnaly - DEBUG - ⏰ [DEV] Column 'end_time' contributed 14 valid rows for filtering.
+2025-10-20 21:46:43,247 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.downloads: 15 -> 14 rows. Keeping file.
+2025-10-20 21:46:43,247 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Chrome.visited_links', skipping time filtering.
+2025-10-20 21:46:43,248 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.visited_links: 383 -> 383 rows. Keeping file.
+2025-10-20 21:46:43,248 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Chrome.downloads_url_chains', skipping time filtering.
+2025-10-20 21:46:43,248 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.downloads_url_chains: 15 -> 15 rows. Keeping file.
+2025-10-20 21:46:43,248 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Chrome.keyword_search_terms', skipping time filtering.
+2025-10-20 21:46:43,249 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.keyword_search_terms: 193 -> 193 rows. Keeping file.
+2025-10-20 21:46:43,250 - DevAnaly - DEBUG - ⏰ [DEV] Column 'date_last_used' contributed 39 valid rows for filtering.
+2025-10-20 21:46:43,251 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.logins: 94 -> 39 rows. Keeping file.
+2025-10-20 21:46:43,252 - DevAnaly - DEBUG - ⏰ [DEV] Column 'date_last_used' contributed 27 valid rows for filtering.
+2025-10-20 21:46:43,252 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.autofill: 27 -> 27 rows. Keeping file.
+2025-10-20 21:46:43,253 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_visited' contributed 2 valid rows for filtering.
+2025-10-20 21:46:43,254 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.keywords: 22 -> 2 rows. Keeping file.
+2025-10-20 21:46:43,254 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Chrome.autofill_sync_metadata', skipping time filtering.
+2025-10-20 21:46:43,255 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Chrome.autofill_sync_metadata: 25 -> 25 rows. Keeping file.
+2025-10-20 21:46:43,257 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_visit_time' contributed 36 valid rows for filtering.
+2025-10-20 21:46:43,257 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.urls: 36 -> 36 rows. Keeping file.
+2025-10-20 21:46:43,259 - DevAnaly - DEBUG - ⏰ [DEV] Column 'visit_time' contributed 65 valid rows for filtering.
+2025-10-20 21:46:43,260 - DevAnaly - INFO - 🗑️ [DEV] Row filtering: 65 -> 60 rows
+2025-10-20 21:46:43,260 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.visits: 65 -> 60 rows. Keeping file.
+2025-10-20 21:46:43,261 - DevAnaly - DEBUG - ⏰ [DEV] Column 'end_time' contributed 2 valid rows for filtering.
+2025-10-20 21:46:43,262 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.downloads: 2 -> 2 rows. Keeping file.
+2025-10-20 21:46:43,262 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Edge.visited_links', skipping time filtering.
+2025-10-20 21:46:43,262 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.visited_links: 28 -> 28 rows. Keeping file.
+2025-10-20 21:46:43,263 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Edge.downloads_url_chains', skipping time filtering.
+2025-10-20 21:46:43,263 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.downloads_url_chains: 2 -> 2 rows. Keeping file.
+2025-10-20 21:46:43,263 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'Edge.keyword_search_terms', skipping time filtering.
+2025-10-20 21:46:43,263 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.keyword_search_terms: 14 -> 14 rows. Keeping file.
+2025-10-20 21:46:43,265 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_visited' contributed 1 valid rows for filtering.
+2025-10-20 21:46:43,266 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Edge.keywords: 9 -> 1 rows. Keeping file.
+2025-10-20 21:46:43,267 - DevAnaly - DEBUG - ⏰ [DEV] Column 'timestamp' contributed 59 valid rows for filtering.
+2025-10-20 21:46:43,267 - DevAnaly - DEBUG - 🔧 [DEV] Filtered binary: 59 -> 59 rows. Keeping file.
+2025-10-20 21:46:43,268 - DevAnaly - DEBUG - ⏰ [DEV] Column 'timestamp' contributed 12 valid rows for filtering.
+2025-10-20 21:46:43,269 - DevAnaly - DEBUG - 🔧 [DEV] Filtered browser_collected_files: 12 -> 12 rows. Keeping file.
+2025-10-20 21:46:43,269 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'browser_discovered_profiles', skipping time filtering.
+2025-10-20 21:46:43,269 - DevAnaly - DEBUG - 🔧 [DEV] Filtered browser_discovered_profiles: 3 -> 3 rows. Keeping file.
+2025-10-20 21:46:43,269 - DevAnaly - INFO - 📊 [DEV] BROWSER filtering summary: 5,855 -> 5,134 rows (reduction: 721 rows, 12.3%)
+2025-10-20 21:46:43,270 - Analyzer - DEBUG - Filtering data success: BROWSER
+2025-10-20 21:46:43,299 - Analyzer - DEBUG - Sending data to backend for category: BROWSER
+2025-10-20 21:46:43,300 - Analyzer - DEBUG - 📦 Sending 5134 filtered artifacts for category: BROWSER
+2025-10-20 21:46:43,300 - BackendClient - INFO - 🧪 [TEST] Received 5134 artifacts for validation
+2025-10-20 21:46:43,319 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 5134 artifacts
+2025-10-20 21:46:43,320 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 5134
+2025-10-20 21:46:43,320 - Analyzer - DEBUG - ✅ Successfully sent 5134 artifacts for category: BROWSER
+2025-10-20 21:46:43,320 - Analyzer - DEBUG - 📋 Stored 5134 complete artifact objects
+2025-10-20 21:46:43,321 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 5134
+2025-10-20 21:46:43,361 - Analyzer - DEBUG - 🔄 Processing category: DELETED
+2025-10-20 21:46:44,786 - Analyzer - DEBUG - Filtering data for category: DELETED
+2025-10-20 21:46:44,787 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'statistics', skipping time filtering.
+2025-10-20 21:46:44,787 - DevAnaly - DEBUG - 🔧 [DEV] Filtered statistics: 1 -> 1 rows. Keeping file.
+2025-10-20 21:46:44,787 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'data_sources', skipping time filtering.
+2025-10-20 21:46:44,788 - DevAnaly - DEBUG - 🔧 [DEV] Filtered data_sources: 1 -> 1 rows. Keeping file.
+2025-10-20 21:46:44,799 - DevAnaly - DEBUG - ⏰ [DEV] Column 'deletion_time' contributed 51922 valid rows for filtering.
+2025-10-20 21:46:44,889 - DevAnaly - INFO - 🗑️ [DEV] Filtered: 51922 -> 50002 rows
+2025-10-20 21:46:44,891 - DevAnaly - DEBUG - 🔧 [DEV] Filtered mft_deleted_files: 55086 -> 50002 rows. Keeping file.
+2025-10-20 21:46:44,892 - DevAnaly - DEBUG - ⏰ [DEV] Column 'deleted_time' contributed 150 valid rows for filtering.
+2025-10-20 21:46:44,894 - DevAnaly - DEBUG - 🔧 [DEV] Filtered recycle_bin_files: 151 -> 150 rows. Keeping file.
+2025-10-20 21:46:44,894 - DevAnaly - INFO - 📊 [DEV] DELETED filtering summary: 55,239 -> 50,154 rows (reduction: 5,085 rows, 9.2%)
+2025-10-20 21:46:44,895 - Analyzer - DEBUG - Filtering data success: DELETED
+2025-10-20 21:46:45,050 - Analyzer - DEBUG - Sending data to backend for category: DELETED
+2025-10-20 21:46:45,051 - Analyzer - DEBUG - 📦 Sending 50154 filtered artifacts for category: DELETED
+2025-10-20 21:46:45,051 - BackendClient - INFO - 🧪 [TEST] Received 50154 artifacts for validation
+2025-10-20 21:46:45,163 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 50154 artifacts
+2025-10-20 21:46:45,163 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 55288
+2025-10-20 21:46:45,164 - Analyzer - DEBUG - ✅ Successfully sent 50154 artifacts for category: DELETED
+2025-10-20 21:46:45,164 - Analyzer - DEBUG - 📋 Stored 50154 complete artifact objects
+2025-10-20 21:46:45,164 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 55288
+2025-10-20 21:46:45,203 - Analyzer - DEBUG - 🔄 Processing category: LNK
+2025-10-20 21:46:45,258 - Analyzer - DEBUG - Filtering data for category: LNK
+2025-10-20 21:46:45,259 - DevAnaly - DEBUG - ⏰ [DEV] Column 'target_info__target_times__access' contributed 187 valid rows for filtering.
+2025-10-20 21:46:45,261 - DevAnaly - DEBUG - 🔧 [DEV] Filtered lnk_files: 264 -> 117 rows. Keeping file.
+2025-10-20 21:46:45,261 - DevAnaly - WARNING - ℹ️ [DEV] No time columns found for 'search_directories', skipping time filtering.
+2025-10-20 21:46:45,262 - DevAnaly - DEBUG - 🔧 [DEV] Filtered search_directories: 1 -> 1 rows. Keeping file.
+2025-10-20 21:46:45,262 - DevAnaly - INFO - 📊 [DEV] LNK filtering summary: 265 -> 118 rows (reduction: 147 rows, 55.5%)
+2025-10-20 21:46:45,262 - Analyzer - DEBUG - Filtering data success: LNK
+2025-10-20 21:46:45,264 - Analyzer - DEBUG - Sending data to backend for category: LNK
+2025-10-20 21:46:45,264 - Analyzer - DEBUG - 📦 Sending 118 filtered artifacts for category: LNK
+2025-10-20 21:46:45,265 - BackendClient - INFO - 🧪 [TEST] Received 118 artifacts for validation
+2025-10-20 21:46:45,265 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 118 artifacts
+2025-10-20 21:46:45,265 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 55406
+2025-10-20 21:46:45,266 - Analyzer - DEBUG - ✅ Successfully sent 118 artifacts for category: LNK
+2025-10-20 21:46:45,266 - Analyzer - DEBUG - 📋 Stored 118 complete artifact objects
+2025-10-20 21:46:45,266 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 55406
+2025-10-20 21:46:45,300 - Analyzer - DEBUG - 🔄 Processing category: MESSENGER
+2025-10-20 21:46:45,483 - Analyzer - DEBUG - Filtering data for category: MESSENGER
+2025-10-20 21:46:45,486 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_modified' contributed 4788 valid rows for filtering.
+2025-10-20 21:46:45,488 - DevAnaly - INFO - Filtered out 20 rows based on 11 excluded extensions.
+2025-10-20 21:46:45,488 - DevAnaly - INFO - 📱 [DEV] Processing Discord: 4768 rows
+2025-10-20 21:46:45,489 - DevAnaly - DEBUG - 🔧 [DEV] Filtered Discord.files: 4827 -> 4768 rows. Keeping file.
+2025-10-20 21:46:45,493 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_modified' contributed 2366 valid rows for filtering.
+2025-10-20 21:46:45,496 - DevAnaly - INFO - Filtered out 0 rows based on 11 excluded extensions.
+2025-10-20 21:46:45,496 - DevAnaly - INFO - 📱 [DEV] Processing KakaoTalk: 2366 rows
+2025-10-20 21:46:45,497 - DevAnaly - DEBUG - 🔧 [DEV] Filtered KakaoTalk.files: 4220 -> 2366 rows. Keeping file.
+2025-10-20 21:46:45,497 - DevAnaly - INFO - 📊 [DEV] MESSENGER filtering summary: 9,047 -> 7,134 rows (reduction: 1,913 rows, 21.1%)
+2025-10-20 21:46:45,497 - Analyzer - DEBUG - Filtering data success: MESSENGER
+2025-10-20 21:46:45,515 - Analyzer - DEBUG - Sending data to backend for category: MESSENGER
+2025-10-20 21:46:45,515 - Analyzer - DEBUG - 📦 Sending 7134 filtered artifacts for category: MESSENGER
+2025-10-20 21:46:45,515 - BackendClient - INFO - 🧪 [TEST] Received 7134 artifacts for validation
+2025-10-20 21:46:45,535 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 7134 artifacts
+2025-10-20 21:46:45,535 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 62540
+2025-10-20 21:46:45,536 - Analyzer - DEBUG - ✅ Successfully sent 7134 artifacts for category: MESSENGER
+2025-10-20 21:46:45,536 - Analyzer - DEBUG - 📋 Stored 7134 complete artifact objects
+2025-10-20 21:46:45,536 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 62540
+2025-10-20 21:46:45,586 - Analyzer - DEBUG - 🔄 Processing category: PREFETCH
+2025-10-20 21:46:45,613 - Analyzer - DEBUG - Filtering data for category: PREFETCH
+2025-10-20 21:46:45,614 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_1' contributed 389 valid rows for filtering.
+2025-10-20 21:46:45,615 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_2' contributed 323 valid rows for filtering.
+2025-10-20 21:46:45,615 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_3' contributed 282 valid rows for filtering.
+2025-10-20 21:46:45,616 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_4' contributed 251 valid rows for filtering.
+2025-10-20 21:46:45,617 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_5' contributed 214 valid rows for filtering.
+2025-10-20 21:46:45,618 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_6' contributed 192 valid rows for filtering.
+2025-10-20 21:46:45,619 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_7' contributed 165 valid rows for filtering.
+2025-10-20 21:46:45,620 - DevAnaly - DEBUG - ⏰ [DEV] Column 'last_run_times_8' contributed 151 valid rows for filtering.
+2025-10-20 21:46:45,621 - DevAnaly - INFO - 🔎 [DEV] Applying 'PREFETCH' filter to prefetch_files
+2025-10-20 21:46:45,621 - DevAnaly - DEBUG - 🔧 [DEV] Filtered prefetch_files: 389 -> 389 rows. Keeping file.
+2025-10-20 21:46:45,622 - DevAnaly - INFO - 📊 [DEV] PREFETCH filtering summary: 389 -> 389 rows (reduction: 0 rows, 0.0%)
+2025-10-20 21:46:45,622 - Analyzer - DEBUG - Filtering data success: PREFETCH
+2025-10-20 21:46:45,624 - Analyzer - DEBUG - Sending data to backend for category: PREFETCH
+2025-10-20 21:46:45,624 - Analyzer - DEBUG - 📦 Sending 389 filtered artifacts for category: PREFETCH
+2025-10-20 21:46:45,624 - BackendClient - INFO - 🧪 [TEST] Received 389 artifacts for validation
+2025-10-20 21:46:45,627 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 389 artifacts
+2025-10-20 21:46:45,628 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 62929
+2025-10-20 21:46:45,628 - Analyzer - DEBUG - ✅ Successfully sent 389 artifacts for category: PREFETCH
+2025-10-20 21:46:45,628 - Analyzer - DEBUG - 📋 Stored 389 complete artifact objects
+2025-10-20 21:46:45,628 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 62929
+2025-10-20 21:46:45,671 - Analyzer - DEBUG - 🔄 Processing category: USB
+2025-10-20 21:46:45,680 - Analyzer - DEBUG - Filtering data for category: USB
+2025-10-20 21:46:45,681 - DevAnaly - DEBUG - ⏰ [DEV] Column 'setupapi_info__last_connection_time' contributed 7 valid rows for filtering.
+2025-10-20 21:46:45,682 - DevAnaly - DEBUG - ⏰ [DEV] Column 'setupapi_info__first_connection_time' contributed 7 valid rows for filtering.
+2025-10-20 21:46:45,684 - DevAnaly - DEBUG - ⏰ [DEV] Column 'setupapi_info__last_disconnection_time' contributed 2 valid rows for filtering.
+2025-10-20 21:46:45,687 - DevAnaly - DEBUG - 🔧 [DEV] Filtered usb_devices: 7 -> 7 rows. Keeping file.
+2025-10-20 21:46:45,688 - DevAnaly - INFO - 📊 [DEV] USB filtering summary: 7 -> 7 rows (reduction: 0 rows, 0.0%)
+2025-10-20 21:46:45,688 - Analyzer - DEBUG - Filtering data success: USB
+2025-10-20 21:46:45,689 - Analyzer - DEBUG - Sending data to backend for category: USB
+2025-10-20 21:46:45,689 - Analyzer - DEBUG - 📦 Sending 7 filtered artifacts for category: USB
+2025-10-20 21:46:45,689 - BackendClient - INFO - 🧪 [TEST] Received 7 artifacts for validation
+2025-10-20 21:46:45,690 - BackendClient - INFO - ✅ [TEST] Successfully validated and stored 7 artifacts
+2025-10-20 21:46:45,690 - BackendClient - INFO - 🔢 [TEST] Total artifacts stored: 62936
+2025-10-20 21:46:45,690 - Analyzer - DEBUG - ✅ Successfully sent 7 artifacts for category: USB
+2025-10-20 21:46:45,690 - Analyzer - DEBUG - 📋 Stored 7 complete artifact objects
+2025-10-20 21:46:45,690 - Analyzer - DEBUG - 🔢 Total artifacts stored so far: 62936
+2025-10-20 21:46:45,730 - Analyzer - INFO - Artifact processing completed successfully for task: session-20250930-060607-59984faf
+2025-10-20 21:46:45,730 - DevAnaly - INFO - 🔧 [DEV] Starting _generate_analysis_result (Behavior-specific Classification)
+2025-10-20 21:46:45,780 - DevAnaly - INFO - ✅ [DEV] acquisition: 11588 artifacts, risk=normal
+2025-10-20 21:46:45,781 - DevAnaly - INFO - ✅ [DEV] forgery: 506 artifacts, risk=normal
+2025-10-20 21:46:45,781 - DevAnaly - INFO - ✅ [DEV] upload: 7 artifacts, risk=normal
+2025-10-20 21:46:45,787 - DevAnaly - INFO - ✅ [DEV] deletion: 50152 artifacts, risk=normal
+2025-10-20 21:46:45,787 - DevAnaly - INFO - ✅ [DEV] etc: 683 artifacts, risk=normal
+2025-10-20 21:46:45,787 - DevAnaly - INFO - ================================================================================
+2025-10-20 21:46:45,788 - DevAnaly - INFO - 📊 [DEV] Behavior-specific Analysis Statistics
+2025-10-20 21:46:45,788 - DevAnaly - INFO - ================================================================================
+2025-10-20 21:46:45,788 - DevAnaly - INFO - 🔍 Behavior-wise Statistics:
+2025-10-20 21:46:45,788 - DevAnaly - INFO -   • acquisition: 11,588 artifacts (18.4%) - Risk: normal
+2025-10-20 21:46:45,788 - DevAnaly - INFO -   • forgery: 506 artifacts (0.8%) - Risk: normal
+2025-10-20 21:46:45,788 - DevAnaly - INFO -   • upload: 7 artifacts (0.0%) - Risk: normal
+2025-10-20 21:46:45,788 - DevAnaly - INFO -   • deletion: 50,152 artifacts (79.7%) - Risk: normal
+2025-10-20 21:46:45,789 - DevAnaly - INFO -   • etc: 683 artifacts (1.1%) - Risk: normal
+2025-10-20 21:46:45,789 - DevAnaly - INFO - 
+📉 Filtering Effectiveness:
+2025-10-20 21:46:45,789 - DevAnaly - INFO -   • Original Data: 70,802 rows
+2025-10-20 21:46:45,789 - DevAnaly - INFO -   • Filtered Data: 62,936 rows
+2025-10-20 21:46:45,789 - DevAnaly - INFO -   • Reduction: 7,866 rows (11.1%)
+2025-10-20 21:46:45,789 - DevAnaly - INFO - ================================================================================
+2025-10-20 21:46:45,789 - DevAnaly - INFO - ✅ [DEV] Completed _generate_analysis_result (Behavior-specific Classification)
+2025-10-20 21:46:45,790 - BackendClient - INFO - 🧪 [TEST] Received analysis result for behavior: acquisition
+2025-10-20 21:46:45,790 - BackendClient - INFO - 📋 [TEST] Analysis Result Details:
+2025-10-20 21:46:45,790 - BackendClient - INFO -   - Behavior: acquisition
+2025-10-20 21:46:45,790 - BackendClient - INFO -   - Risk Level: normal
+2025-10-20 21:46:45,790 - BackendClient - INFO -   - Summary: Analysis of 11588 artifacts for acquisition behavior. Top artifact types: Discord.files_data: 4768, Chrome.visits_data: 2700, KakaoTalk.files_data: 2366
+2025-10-20 21:46:45,791 - BackendClient - INFO -   - Artifact Count: 11588
+2025-10-20 21:46:45,791 - BackendClient - INFO - ✅ [TEST] Successfully stored analysis result with ID: test_analysis_1
+2025-10-20 21:46:45,791 - Analyzer - DEBUG - Successfully saved analysis result for behavior: BehaviorType.acquisition (ID: test_analysis_1)
+2025-10-20 21:46:45,791 - BackendClient - INFO - 🧪 [TEST] Received analysis result for behavior: forgery
+2025-10-20 21:46:45,791 - BackendClient - INFO - 📋 [TEST] Analysis Result Details:
+2025-10-20 21:46:45,792 - BackendClient - INFO -   - Behavior: forgery
+2025-10-20 21:46:45,792 - BackendClient - INFO -   - Risk Level: normal
+2025-10-20 21:46:45,792 - BackendClient - INFO -   - Summary: Analysis of 506 artifacts for forgery behavior. Top artifact types: prefetch_files_data: 389, lnk_files_data: 117
+2025-10-20 21:46:45,792 - BackendClient - INFO -   - Artifact Count: 506
+2025-10-20 21:46:45,792 - BackendClient - INFO - ✅ [TEST] Successfully stored analysis result with ID: test_analysis_2
+2025-10-20 21:46:45,792 - Analyzer - DEBUG - Successfully saved analysis result for behavior: BehaviorType.forgery (ID: test_analysis_2)
+2025-10-20 21:46:45,793 - BackendClient - INFO - 🧪 [TEST] Received analysis result for behavior: upload
+2025-10-20 21:46:45,793 - BackendClient - INFO - 📋 [TEST] Analysis Result Details:
+2025-10-20 21:46:45,793 - BackendClient - INFO -   - Behavior: upload
+2025-10-20 21:46:45,793 - BackendClient - INFO -   - Risk Level: normal
+2025-10-20 21:46:45,793 - BackendClient - INFO -   - Summary: Analysis of 7 artifacts for upload behavior. Top artifact types: usb_devices_data: 7
+2025-10-20 21:46:45,793 - BackendClient - INFO -   - Artifact Count: 7
+2025-10-20 21:46:45,793 - BackendClient - INFO - ✅ [TEST] Successfully stored analysis result with ID: test_analysis_3
+2025-10-20 21:46:45,794 - Analyzer - DEBUG - Successfully saved analysis result for behavior: BehaviorType.upload (ID: test_analysis_3)
+2025-10-20 21:46:45,794 - BackendClient - INFO - 🧪 [TEST] Received analysis result for behavior: deletion
+2025-10-20 21:46:45,794 - BackendClient - INFO - 📋 [TEST] Analysis Result Details:
+2025-10-20 21:46:45,794 - BackendClient - INFO -   - Behavior: deletion
+2025-10-20 21:46:45,794 - BackendClient - INFO -   - Risk Level: normal
+2025-10-20 21:46:45,794 - BackendClient - INFO -   - Summary: Analysis of 50152 artifacts for deletion behavior. Top artifact types: mft_deleted_files_data: 50002, recycle_bin_files_data: 150
+2025-10-20 21:46:45,795 - BackendClient - INFO -   - Artifact Count: 50152
+2025-10-20 21:46:45,795 - BackendClient - INFO - ✅ [TEST] Successfully stored analysis result with ID: test_analysis_4
+2025-10-20 21:46:45,795 - Analyzer - DEBUG - Successfully saved analysis result for behavior: BehaviorType.deletion (ID: test_analysis_4)
+2025-10-20 21:46:45,795 - BackendClient - INFO - 🧪 [TEST] Received analysis result for behavior: etc
+2025-10-20 21:46:45,795 - BackendClient - INFO - 📋 [TEST] Analysis Result Details:
+2025-10-20 21:46:45,795 - BackendClient - INFO -   - Behavior: etc
+2025-10-20 21:46:45,795 - BackendClient - INFO -   - Risk Level: normal
+2025-10-20 21:46:45,796 - BackendClient - INFO -   - Summary: Analysis of 683 artifacts for etc behavior. Top artifact types: Chrome.visited_links_data: 383, Chrome.keyword_search_terms_data: 193, binary_data: 59
+2025-10-20 21:46:45,796 - BackendClient - INFO -   - Artifact Count: 683
+2025-10-20 21:46:45,796 - BackendClient - INFO - ✅ [TEST] Successfully stored analysis result with ID: test_analysis_5
+2025-10-20 21:46:45,796 - Analyzer - DEBUG - Successfully saved analysis result for behavior: BehaviorType.etc (ID: test_analysis_5)
+2025-10-20 21:46:45,796 - Analyzer - INFO - Analysis process completed successfully for task: session-20250930-060607-59984faf
+2025-10-20 21:46:45,801 - testAnalyzer - INFO - 📊 [TEST] Summary: {
+    "total_artifacts": 62936,
+    "total_analysis_results": 5,
+    "artifacts_by_type": {
+        "Chrome.urls_data": 1519,
+        "Chrome.visits_data": 2700,
+        "Chrome.downloads_data": 14,
+        "Chrome.visited_links_data": 383,
+        "Chrome.downloads_url_chains_data": 15,
+        "Chrome.keyword_search_terms_data": 193,
+        "Chrome.logins_data": 39,
+        "Chrome.autofill_data": 27,
+        "Chrome.keywords_data": 2,
+        "Chrome.autofill_sync_metadata_data": 25,
+        "Edge.urls_data": 36,
+        "Edge.visits_data": 60,
+        "Edge.downloads_data": 2,
+        "Edge.visited_links_data": 28,
+        "Edge.downloads_url_chains_data": 2,
+        "Edge.keyword_search_terms_data": 14,
+        "Edge.keywords_data": 1,
+        "binary_data": 59,
+        "browser_collected_files_data": 12,
+        "browser_discovered_profiles_data": 3,
+        "statistics_data": 1,
+        "data_sources_data": 1,
+        "mft_deleted_files_data": 50002,
+        "recycle_bin_files_data": 150,
+        "lnk_files_data": 117,
+        "search_directories_data": 1,
+        "Discord.files_data": 4768,
+        "KakaoTalk.files_data": 2366,
+        "prefetch_files_data": 389,
+        "usb_devices_data": 7
+    },
+    "artifacts_by_behavior": {
+        "acquisition": 11588,
+        "forgery": 506,
+        "upload": 7,
+        "deletion": 50152,
+        "etc": 683
+    },
+    "artifacts_by_risk_level": {
+        "normal": 5
+    }
+}
+2025-10-20 21:46:45,801 - testAnalyzer - INFO - 🎉 [TEST] Test analysis completed successfully!
