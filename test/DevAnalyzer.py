@@ -30,7 +30,7 @@ class DevAnalyzer(TestAnalyzer):
             # "Chrome.autofill_profiles", "Edge.autofill_profiles",
             "Chrome.addresses", "Edge.addresses",
             "Chrome.autofill_sync_metadata", "Edge.autofill_sync_metadata",
-            "Chrome.sync_entities_metadata", "Edge.sync_entities_metadata", 
+            # "Chrome.sync_entities_metadata", "Edge.sync_entities_metadata", 
             "Chrome.downloads", "Edge.downloads",
             "Chrome.downloads_url_chains", "Edge.downloads_url_chains",
             "Chrome.logins", "Edge.logins"
@@ -68,7 +68,7 @@ class DevAnalyzer(TestAnalyzer):
             "recycle_bin_files": "deleted_time",
             "lnk_files": "target_info__target_times__access",
             "prefetch_files": "last_run_time_1",
-            "usb_devices": "setupapi_info__last_connection_time",
+            # "usb_devices": "setupapi_info__last_connection_time",
             "KakaoTalk.files": "last_modified",
             "Discord.files": "last_modified"
         }
@@ -77,52 +77,23 @@ class DevAnalyzer(TestAnalyzer):
         """필터링된 데이터 저장을 위한 디렉토리 생성"""
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-            self.dev_logger.info(f"📁 [DEV] Created output directory: {self.output_dir}")
+            #self.dev_logger.info(f"📁 [DEV] Created output directory: {self.output_dir}")
     
     def _save_filtered_data(self, category: Category, df_results: ResultDataFrames) -> str:
-        """필터링된 데이터를 CSV 파일로 저장"""
-        self._create_output_directory()
-        # 빈 데이터인 경우 저장하지 않음
+        """필터링된 데이터를 CSV 파일로 저장 (이미 필터링된 데이터라고 가정)"""
         if not df_results or not df_results.data:
-            self.dev_logger.info(f"⏭️ [DEV] No data to save for category: {category.name}")
+            #self.dev_logger.info(f"⏭️ [DEV] No data to save for category: {category.name}")
             return ""
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         category_dir = os.path.join(self.output_dir, f"{category.name.lower()}_{timestamp}")
         
+        # 저장할 데이터가 있으므로 바로 디렉토리 생성
+        os.makedirs(category_dir)
+        #self.dev_logger.info(f"📁 [DEV] Created category directory: {category_dir}")
+        
         saved_count = 0
-        skipped_count = 0
-        empty_count = 0
-        
-        # 먼저 저장할 파일이 있는지 확인
-        files_to_save = []
         for result in df_results.data:
-            # 브라우저 카테고리의 경우 화이트리스트 확인
-            if category == Category.BROWSER and result.name not in self.browser_whitelist:
-                self.dev_logger.debug(f"⏭️ [DEV] Skipping browser file (not in whitelist): {result.name}")
-                skipped_count += 1
-                continue
-            
-            # 빈 데이터인 경우 건너뛰기
-            if result.data.empty:
-                self.dev_logger.info(f"⏭️ [DEV] Skipping empty file: {result.name} (0 rows)")
-                empty_count += 1
-                continue
-            
-            files_to_save.append(result)
-        
-        # 저장할 파일이 없으면 디렉토리 생성하지 않음
-        if not files_to_save:
-            self.dev_logger.info(f"⏭️ [DEV] No files to save for category: {category.name} (all files empty or skipped)")
-            return ""
-        
-        # 디렉토리 생성
-        if not os.path.exists(category_dir):
-            os.makedirs(category_dir)
-            self.dev_logger.info(f"📁 [DEV] Created category directory: {category_dir}")
-        
-        # 파일 저장
-        for result in files_to_save:
             # 파일명에서 특수문자 제거 및 안전한 파일명 생성
             safe_filename = re.sub(r'[/\\:*?"<>|]', '_', result.name)
             if not safe_filename.endswith('.csv'):
@@ -132,81 +103,100 @@ class DevAnalyzer(TestAnalyzer):
             
             try:
                 result.data.to_csv(file_path, index=False, encoding='utf-8-sig')
-                self.dev_logger.info(f"💾 [DEV] Saved filtered data: {file_path} ({len(result.data)} rows)")
+                #self.dev_logger.info(f"💾 [DEV] Saved filtered data: {file_path} ({len(result.data)} rows)")
                 saved_count += 1
             except Exception as e:
                 self.dev_logger.error(f"❌ [DEV] Failed to save {file_path}: {str(e)}")
         
-        self.dev_logger.info(f"✅ [DEV] Saved {saved_count} files, skipped {skipped_count} files, empty {empty_count} files to: {category_dir}")
+        #self.dev_logger.info(f"✅ [DEV] Saved {saved_count} files to: {category_dir}")
         return category_dir
     
     def _filter_data(self, category: Category, df_results: ResultDataFrames) -> ResultDataFrames:
         """
-        데이터 필터링 처리. 카테고리별로 받아서 데이터를 처리한다.
+        데이터 필터링 처리. 파일 선별을 먼저 수행한 후 데이터 필터링을 적용한다.
+        순서: 파일 필터링 (화이트리스트, 빈 파일) → 데이터 필터링 (시간 → 열/행)
         """
-        self.dev_logger.info(f"🔧 [DEV] Starting _filter_data for category: {category.name}")
+        #self.dev_logger.info(f"🔧 [DEV] Starting _filter_data for category: {category.name}")
         
-        # 빈 데이터인 경우 조기 반환
         if not df_results or not df_results.data:
             self.dev_logger.info(f"⏭️ [DEV] No data to filter for category: {category.name}")
-            return df_results
-        
-        # 필터링 통계 초기화
+            return ResultDataFrames(data=[])
+
         category_original_rows = 0
         category_filtered_rows = 0
-        
+        processed_data = []
+        skipped_by_whitelist = 0
+
         for result in df_results.data:
+            # --- 1. 파일 레벨 필터링 (처리 대상을 먼저 확정) ---
+            if category == Category.BROWSER and result.name not in self.browser_whitelist:
+                skipped_by_whitelist += 1
+                continue
+            
+            if result.data.empty:
+                continue
+            
             original_count = len(result.data)
             category_original_rows += original_count
+
+            # --- 2. 데이터 레벨 필터링 (확정된 파일에 대해서만 수행) ---
+            # 2-1. 시간 필터링
+            df = self._apply_time_filtering(result)
             
-            # 1. 시간 필터링
-            result.data = self._apply_time_filtering(result)
-            after_time_filter = len(result.data)
-            if original_count != after_time_filter:
-                self.dev_logger.info(f"⏰ [DEV] Time filtering for {result.name}: {original_count} -> {after_time_filter} rows")
-            
-            # 2. 카테고리별 열/행 필터링
+            # 2-2. 카테고리별 열/행 필터링 (임시 변수에 필터링 결과를 담음)
+            temp_result = ResultDataFrame(name=result.name, data=df)
             match category:
                 case Category.USB:
-                    result.data = self._filter_usb_data(result)
+                    filtered_df = self._filter_usb_data(temp_result)
                 case Category.LNK:
-                    result.data = self._filter_lnk_data(result)
+                    filtered_df = self._filter_lnk_data(temp_result)
                 case Category.MESSENGER:
-                    result.data = self._filter_messenger_data(result)
+                    filtered_df = self._filter_messenger_data(temp_result)
                 case Category.PREFETCH:
-                    result.data = self._filter_prefetch_data(result)
+                    filtered_df = self._filter_prefetch_data(temp_result)
                 case Category.DELETED:
-                    result.data = self._filter_deleted_data(result)
+                    filtered_df = self._filter_deleted_data(temp_result)
                 case Category.BROWSER:
-                    result.data = self._filter_browser_data(result)
+                    filtered_df = self._filter_browser_data(temp_result)
                 case _:
                     self.dev_logger.warning(f"No specific filter for category {category.name}. Applying default limit.")
-                    result.data = result.data.head(10)
+                    filtered_df = temp_result.data.head(10)
             
-            final_count = len(result.data)
-            category_filtered_rows += final_count
+            final_count = len(filtered_df)
+
+            # --- 3. 최종 결과 추가 ---
+            # 모든 필터링 후 데이터가 남아있는 경우에만 최종 목록에 추가
+            if final_count > 0:
+                result.data = filtered_df
+                category_filtered_rows += final_count
+                processed_data.append(result)
+                self.dev_logger.debug(f"🔧 [DEV] Filtered {result.name}: {original_count} -> {final_count} rows. Keeping file.")
+            else:
+                self.dev_logger.info(f"⏭️ [DEV] Dropping file {result.name} after filtering (0 rows remaining).")
+
+        # if skipped_by_whitelist > 0:
+        #     self.dev_logger.info(f"⏭️ [DEV] Skipped {skipped_by_whitelist} browser files (not in whitelist).")
             
-            self.dev_logger.debug(f"🔧 [DEV] Filtered {result.name} data: {original_count} -> {final_count} rows")
-        
         # 카테고리별 필터링 통계 로깅
         reduction = category_original_rows - category_filtered_rows
         reduction_percent = (reduction / category_original_rows * 100) if category_original_rows > 0 else 0
-        
         self.dev_logger.info(f"📊 [DEV] {category.name} filtering summary: {category_original_rows:,} -> {category_filtered_rows:,} rows (reduction: {reduction:,} rows, {reduction_percent:.1f}%)")
-        
+
         # 전체 통계 업데이트
         if not hasattr(self, '_total_original_rows'):
             self._total_original_rows = 0
             self._total_filtered_rows = 0
-        
         self._total_original_rows += category_original_rows
         self._total_filtered_rows += category_filtered_rows
-        
-        # 필터링된 데이터를 CSV 파일로 저장
-        # self._save_filtered_data(category, df_results)
-        
-        self.dev_logger.info(f"✅ [DEV] Completed _filter_data for category: {category.name}")
-        return df_results
+
+        # 최종적으로 필터링된 데이터로 새 객체 생성
+        filtered_df_results = ResultDataFrames(data=processed_data)
+
+        # 필터링된 데이터 저장
+        # self._save_filtered_data(category, filtered_df_results)
+
+        # self.dev_logger.info(f"✅ [DEV] Completed _filter_data for category: {category.name}")
+        return filtered_df_results
 
     def _apply_time_filtering(self, result: ResultDataFrame) -> pd.DataFrame:
         """
@@ -222,22 +212,22 @@ class DevAnalyzer(TestAnalyzer):
         current_time = datetime.now()
         cutoff_date = current_time - relativedelta(months=self.time_filter_months)
         
-        self.dev_logger.debug(
-            f"⏰ [DEV] Time filtering for '{file_name}': Keeping data from "
-            f"{cutoff_date.strftime('%Y-%m-%d')} to {current_time.strftime('%Y-%m-%d')}"
-        )
+        # self.dev_logger.debug(
+        #     f"⏰ [DEV] Time filtering for '{file_name}': Keeping data from "
+        #     f"{cutoff_date.strftime('%Y-%m-%d')} to {current_time.strftime('%Y-%m-%d')}"
+        # )
 
         target_columns = []
         
         # 1. 파일별 특정 시간 컬럼 규칙 확인
         specific_time_col = self.time_filter_config.get(file_name)
         if specific_time_col and specific_time_col in df.columns:
-            self.dev_logger.info(f"🎯 [DEV] Found specific time column for '{file_name}': '{specific_time_col}'")
+            # self.dev_logger.info(f"🎯 [DEV] Found specific time column for '{file_name}': '{specific_time_col}'")
             target_columns.append(specific_time_col)
         else:
             # 2. 특정 규칙이 없거나 컬럼이 없으면, 일반적인 시간 컬럼 탐색
-            if specific_time_col:
-                 self.dev_logger.warning(f"⚠️ [DEV] Specific time column '{specific_time_col}' not found in '{file_name}'. Falling back to general search.")
+            # if specific_time_col:
+            #      self.dev_logger.warning(f"⚠️ [DEV] Specific time column '{specific_time_col}' not found in '{file_name}'. Falling back to general search.")
             
             time_keywords = ['time', 'date', 'created', 'modified', 'access', 'deletion', 'mtime', 'ctime', 'timestamp']
             target_columns = [
@@ -256,12 +246,12 @@ class DevAnalyzer(TestAnalyzer):
             try:
                 # addresses 파일의 use_date 컬럼 특별 처리 (Unix timestamp)
                 if 'addresses' in file_name and col == 'use_date':
-                    self.dev_logger.debug(f"🔍 [DEV] Converting Unix timestamp in {file_name}")
+                    # self.dev_logger.debug(f"🔍 [DEV] Converting Unix timestamp in {file_name}")
                     # Unix timestamp를 datetime으로 변환
                     temp_dates = self._smart_datetime_conversion(df[col], col)
                 # cookies 파일의 WebKit timestamp 특별 처리
                 elif 'cookies' in file_name and col.endswith('_utc'):
-                    self.dev_logger.debug(f"🔍 [DEV] Converting WebKit timestamp in {file_name}")
+                    # self.dev_logger.debug(f"🔍 [DEV] Converting WebKit timestamp in {file_name}")
                     # WebKit timestamp (마이크로초)를 datetime으로 변환
                     temp_dates = self._smart_datetime_conversion(df[col], col)
                 # 기타 WebKit timestamp 형식 처리 (큰 숫자 값들)
@@ -269,7 +259,7 @@ class DevAnalyzer(TestAnalyzer):
                     # 값이 매우 큰 경우 WebKit timestamp로 간주
                     sample_values = df[col].dropna().head(3)
                     if len(sample_values) > 0 and sample_values.iloc[0] > 1e15:  # WebKit timestamp 범위
-                        self.dev_logger.debug(f"🔍 [DEV] Converting WebKit timestamp for {col}")
+                        # self.dev_logger.debug(f"🔍 [DEV] Converting WebKit timestamp for {col}")
                         temp_dates = self._smart_datetime_conversion(df[col], col)
                     else:
                         # 숫자형 데이터인 경우 Unix timestamp로 시도
@@ -303,7 +293,7 @@ class DevAnalyzer(TestAnalyzer):
         """
         # Categorical 데이터 처리 (먼저 처리)
         if isinstance(series.dtype, pd.CategoricalDtype):
-            self.dev_logger.debug(f"🔍 [DEV] Converting categorical data to string for {column_name}")
+            # self.dev_logger.debug(f"🔍 [DEV] Converting categorical data to string for {column_name}")
             series = pd.Series(series.astype(str), index=series.index if hasattr(series, 'index') else None)
         
         if series.empty:
@@ -321,13 +311,13 @@ class DevAnalyzer(TestAnalyzer):
             max_val = sample_values.max()
             
             if min_val > 1e15:  # WebKit timestamp (마이크로초)
-                self.dev_logger.debug(f"🔍 [DEV] Detected WebKit timestamp for {column_name}")
+                # self.dev_logger.debug(f"🔍 [DEV] Detected WebKit timestamp for {column_name}")
                 return pd.to_datetime(series, unit='us', errors='coerce')
             elif min_val > 1e9:  # Unix timestamp (초)
-                self.dev_logger.debug(f"🔍 [DEV] Detected Unix timestamp for {column_name}")
+                # self.dev_logger.debug(f"🔍 [DEV] Detected Unix timestamp for {column_name}")
                 return pd.to_datetime(series, unit='s', errors='coerce')
             elif min_val > 1e6:  # 밀리초 timestamp
-                self.dev_logger.debug(f"🔍 [DEV] Detected millisecond timestamp for {column_name}")
+                # self.dev_logger.debug(f"🔍 [DEV] Detected millisecond timestamp for {column_name}")
                 return pd.to_datetime(series, unit='ms', errors='coerce')
         
         # 문자열 데이터이거나 숫자형이지만 범위에 맞지 않는 경우
@@ -335,7 +325,7 @@ class DevAnalyzer(TestAnalyzer):
         
         # ISO 형식 확인
         if 'T' in sample_str and ('+' in sample_str or 'Z' in sample_str):
-            self.dev_logger.debug(f"🔍 [DEV] Detected ISO format for {column_name}")
+            # self.dev_logger.debug(f"🔍 [DEV] Detected ISO format for {column_name}")
             return pd.to_datetime(series, format='ISO8601', errors='coerce')
         
         # 일반적인 날짜 형식들 시도
@@ -355,7 +345,7 @@ class DevAnalyzer(TestAnalyzer):
                 # 샘플 값으로 형식 테스트
                 test_val = pd.to_datetime(sample_str, format=fmt, errors='coerce')
                 if not pd.isna(test_val):
-                    self.dev_logger.debug(f"🔍 [DEV] Detected format '{fmt}' for {column_name}")
+                    # self.dev_logger.debug(f"🔍 [DEV] Detected format '{fmt}' for {column_name}")
                     return pd.to_datetime(series, format=fmt, errors='coerce')
             except:
                 continue
@@ -365,22 +355,22 @@ class DevAnalyzer(TestAnalyzer):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             warnings.simplefilter("ignore", FutureWarning)
-            self.dev_logger.debug(f"🔍 [DEV] Using fallback datetime conversion for {column_name}")
+            # self.dev_logger.debug(f"🔍 [DEV] Using fallback datetime conversion for {column_name}")
             return pd.to_datetime(series, errors='coerce')
 
     def _filter_browser_data(self, result: ResultDataFrame) -> pd.DataFrame:
         """브라우저 데이터에 대한 필터링 규칙"""
-        self.dev_logger.info(f"🔎 [DEV] Applying 'BROWSER' filter to {result.name}")
+        # self.dev_logger.info(f"🔎 [DEV] Applying 'BROWSER' filter to {result.name}")
         df = result.data.copy()
         
         # 화이트리스트에 없는 파일은 건너뛰기
         if result.name not in self.browser_whitelist:
-            self.dev_logger.debug(f"⏭️ [DEV] Skipping browser file (not in whitelist): {result.name}")
+            # self.dev_logger.debug(f"⏭️ [DEV] Skipping browser file (not in whitelist): {result.name}")
             return pd.DataFrame()
         
         # 파일명에서 접두사 제거
         file_name = result.name.split('.', 1)[1] if result.name.startswith(('Chrome.', 'Edge.')) else result.name
-        self.dev_logger.debug(f"📁 [DEV] Processing browser file: {file_name}")
+        # self.dev_logger.debug(f"📁 [DEV] Processing browser file: {file_name}")
         
         # 1. 열 필터링
         columns_to_drop = self._get_browser_columns_to_drop(file_name)
@@ -388,7 +378,7 @@ class DevAnalyzer(TestAnalyzer):
         
         if existing_columns_to_drop:
             df.drop(columns=existing_columns_to_drop, inplace=True)
-            self.dev_logger.debug(f"Dropped columns for {file_name}: {existing_columns_to_drop}")
+            # self.dev_logger.debug(f"Dropped columns for {file_name}: {existing_columns_to_drop}")
         
         # 로그인 파일의 경우 첫 번째 컬럼(인덱스)도 제거
         if file_name == "logins" and len(df.columns) > 0:
@@ -397,7 +387,7 @@ class DevAnalyzer(TestAnalyzer):
         # 2. 행 필터링
         df = self._apply_browser_row_filtering(df, file_name)
         
-        self.dev_logger.info(f"🌐 [DEV] Filtered {file_name}: {len(result.data)} -> {len(df)} rows")
+        # self.dev_logger.info(f"🌐 [DEV] Filtered {file_name}: {len(result.data)} -> {len(df)} rows")
         return df
     
     def _apply_browser_row_filtering(self, df: pd.DataFrame, file_name: str) -> pd.DataFrame:
@@ -408,7 +398,7 @@ class DevAnalyzer(TestAnalyzer):
             if 'visit_duration' in df.columns:
                 df['visit_duration'] = pd.to_numeric(df['visit_duration'], errors='coerce')
                 df = df[df['visit_duration'] != 0]
-                self.dev_logger.info(f"🗑️ [DEV] Removed rows with visit_duration=0")
+                # self.dev_logger.info(f"🗑️ [DEV] Removed rows with visit_duration=0")
         
         elif file_name == "urls":
             if 'visit_count' in df.columns:
@@ -418,7 +408,7 @@ class DevAnalyzer(TestAnalyzer):
             if 'url' in df.columns:
                 pattern = '|'.join(self.ad_tracking_domains)
                 df = df[~df['url'].str.contains(pattern, case=False, na=False)]
-                self.dev_logger.info(f"🗑️ [DEV] Removed ad/tracking domains")
+                # self.dev_logger.info(f"🗑️ [DEV] Removed ad/tracking domains")
         
         elif file_name == "downloads":
             # 완료된 다운로드만
@@ -493,7 +483,7 @@ class DevAnalyzer(TestAnalyzer):
 
     def _filter_deleted_data(self, result: ResultDataFrame) -> pd.DataFrame:
         """삭제된 파일 데이터에 대한 필터링"""
-        self.dev_logger.info(f"🔎 [DEV] Applying 'DELETED' filter to {result.name}")
+        # self.dev_logger.info(f"🔎 [DEV] Applying 'DELETED' filter to {result.name}")
         df = result.data.copy()
         
         # 열 필터링
@@ -513,7 +503,7 @@ class DevAnalyzer(TestAnalyzer):
         return df
     
     def _apply_deleted_row_filtering(self, df: pd.DataFrame, file_name: str) -> pd.DataFrame:
-        """삭제된 파일 데이터에 대한 행 필터링"""
+        """삭제된 파일 데이터에 대한 행 필터링 (내부 유출 증거 보존 로직 강화)"""
         if 'mft_deleted' not in str(file_name).lower():
             return df
         
@@ -524,17 +514,47 @@ class DevAnalyzer(TestAnalyzer):
         if file_col in df.columns:
             df = df[~df[file_col].str.startswith('$', na=False)]
         
-        # 시스템 경로 제거
+        # 시스템 경로 제거 로직
         path_col = 'full_path' if 'full_path' in df.columns else 'ParentPath'
         if path_col in df.columns:
+            # 1. 기본적으로 필터링할 시스템 경로 목록
             system_paths = [
                 r'C:\\Windows', r'C:\\Program Files', 
                 r'C:\\ProgramData', r'C:\\\$Recycle\.Bin'
             ]
-            pattern = '|'.join(system_paths)
-            df = df[~df[path_col].str.contains(pattern, case=False, na=False, regex=True)]
+            system_path_pattern = '|'.join(system_paths)
+            # 시스템 경로에 해당하는 파일들을 식별 (True = 삭제 후보)
+            is_in_system_path = df[path_col].str.contains(system_path_pattern, case=False, na=False, regex=True)
+
+            # --- ✨ 새로운 예외 로직 시작 ✨ ---
             
-            # 시스템 로그 파일 제거
+            # 2. 필터링에서 제외할 예외 조건 정의
+            # 2-1. 시스템 경로에 있더라도 보존해야 할 파일 확장자 목록
+            suspicious_extensions = (
+                '.zip', '.rar', '.7z', '.egg',  # 압축 파일
+                '.xlsx', '.xls', '.docx', '.doc', '.pptx', '.ppt', # 오피스 문서
+                '.pdf', '.hwp' # 문서 파일
+            )
+            is_suspicious_extension = df[file_col].str.lower().str.endswith(suspicious_extensions, na=False)
+
+            # 2-2. 공격자가 은닉을 위해 사용할 수 있는 특정 임시 폴더 목록
+            allowed_temp_paths = [
+                r'C:\\Windows\\Temp',  # Windows 공용 임시 폴더
+                r'\\AppData\\Local\\Temp' # 사용자 프로필 임시 폴더 (경로에 포함되는지 검사)
+            ]
+            allowed_temp_pattern = '|'.join(allowed_temp_paths)
+            is_in_allowed_temp_path = df[path_col].str.contains(allowed_temp_pattern, case=False, na=False, regex=True)
+
+            # 3. 예외 조건 통합: 확장자가 의심스럽거나, 허용된 임시 폴더에 있으면 보존 (True = 보존)
+            should_be_preserved = is_suspicious_extension | is_in_allowed_temp_path
+            
+            # --- ✨ 예외 로직 종료 ✨ ---
+
+            # 4. 최종 필터링 적용: '삭제 후보'이면서 '보존' 대상이 아닌 파일만 실제 삭제
+            rows_to_drop = is_in_system_path & ~should_be_preserved
+            df = df[~rows_to_drop]
+
+            # 시스템 로그 파일 제거 (이전과 동일)
             if file_col in df.columns:
                 system_files = ['bootex.log', 'LOG', 'setup.log', 'install.log']
                 system_pattern = '|'.join(system_files)
@@ -547,7 +567,7 @@ class DevAnalyzer(TestAnalyzer):
 
     def _filter_lnk_data(self, result: ResultDataFrame) -> pd.DataFrame:
         """LNK 데이터 필터링"""
-        self.dev_logger.info(f"🔎 [DEV] Applying 'LNK' filter to {result.name}")
+        # self.dev_logger.info(f"🔎 [DEV] Applying 'LNK' filter to {result.name}")
         df = result.data.copy()
         
         # 열 필터링
@@ -598,7 +618,7 @@ class DevAnalyzer(TestAnalyzer):
 
     def _filter_messenger_data(self, result: ResultDataFrame) -> pd.DataFrame:
         """메신저 데이터 필터링"""
-        self.dev_logger.info(f"🔎 [DEV] Applying 'MESSENGER' filter to {result.name}")
+        # self.dev_logger.info(f"🔎 [DEV] Applying 'MESSENGER' filter to {result.name}")
         df = result.data.copy()
         
         # 열 필터링
@@ -622,7 +642,7 @@ class DevAnalyzer(TestAnalyzer):
     def _apply_messenger_row_filtering(self, df: pd.DataFrame, result_name: str) -> pd.DataFrame:
         """메신저 데이터 행 필터링"""
         if 'file_name' not in df.columns:
-            self.dev_logger.warning("⚠️ 'file_name' column not found, skipping extension filtering.")
+            # self.dev_logger.warning("⚠️ 'file_name' column not found, skipping extension filtering.")
             return df
         
         # 제외할 확장자
@@ -663,7 +683,7 @@ class DevAnalyzer(TestAnalyzer):
 
     def _filter_usb_data(self, result: ResultDataFrame) -> pd.DataFrame:
         """USB 데이터 필터링"""
-        self.dev_logger.info(f"🔎 [DEV] Applying 'USB' filter to {result.name}")
+        # self.dev_logger.info(f"🔎 [DEV] Applying 'USB' filter to {result.name}")
         df = result.data.copy()
         
         static_columns = [
@@ -686,11 +706,11 @@ class DevAnalyzer(TestAnalyzer):
         return df
 
     
-        
+    
     def _load_data(self, category: Category) -> ResultDataFrames:
         """카테고리별 데이터 로드 - 파일이 없으면 건너뛰기"""
         try:
-            self.dev_logger.debug(f"Starting data load for category: {category.name}")
+            # self.dev_logger.debug(f"Starting data load for category: {category.name}")
             
             # helper를 사용하여 데이터 로드 및 인코딩 처리
             df_results = self.helper.get_encoded_results(self.task_id, category)
@@ -700,354 +720,168 @@ class DevAnalyzer(TestAnalyzer):
                 # 빈 ResultDataFrames 반환
                 return ResultDataFrames(data=[])
             
-            self.dev_logger.debug(f"Successfully loaded {len(df_results.data)} dataframes for category: {category.name}")
+            # self.dev_logger.debug(f"Successfully loaded {len(df_results.data)} dataframes for category: {category.name}")
             return df_results
             
         except Exception as e:
-            self.dev_logger.warning(f"⚠️ [DEV] Failed to load data for category {category.name}: {e}")
-            self.dev_logger.info(f"⏭️ [DEV] Skipping category {category.name} - no data available")
+            # self.dev_logger.warning(f"⚠️ [DEV] Failed to load data for category {category.name}: {e}")
+            # self.dev_logger.info(f"⏭️ [DEV] Skipping category {category.name} - no data available")
             # 빈 ResultDataFrames 반환하여 건너뛰기
             return ResultDataFrames(data=[])
 
-    # def _generate_analysis_result(self):
-    #     """
-    #     self.created_artifacts를 활용하여 분류결과를 생성함.
-    #     결과는 상속받은 클래스에서 정의된 아래 self.analyze_results에 업데이트할 것.
+    def _generate_analysis_result(self):
+        """
+        self.created_artifacts를 활용하여 행위별 분류결과를 생성함.
+        결과는 상속받은 클래스에서 정의된 아래 self.analyze_results에 업데이트할 것.
 
-    #     self.analyze_results = {
-    #         behavior: {
-    #             "job_id": self.job_id,
-    #             "task_id": self.task_id,
-    #             "behavior": behavior.name,
-    #             "analysis_summary": "",
-    #             "risk_level": "",
-    #             "artifact_ids": []
-    #         } for behavior in BehaviorType
-    #     }
-    #     """
-    #     self.dev_logger.info("🔧 [DEV] Starting _generate_analysis_result")
+        self.analyze_results = {
+            behavior: {
+                "job_id": self.job_id,
+                "task_id": self.task_id,
+                "behavior": behavior.name,
+                "analysis_summary": "",
+                "risk_level": "",
+                "artifact_ids": []
+            } for behavior in BehaviorType
+        }
+        행위별로 관련된 아티팩트만 분류하여 분석을 수행.
+        """
+        self.dev_logger.info("🔧 [DEV] Starting _generate_analysis_result (Behavior-specific Classification)")
         
-    #     # 부모 클래스의 메서드 먼저 실행
-    #     super()._generate_analysis_result()
+        # 부모 클래스의 메서드 먼저 실행
+        super()._generate_analysis_result()
         
-    #     # created_artifacts가 비어있으면 조기 종료
-    #     if not self.created_artifacts:
-    #         self.dev_logger.warning("⚠️ [DEV] No artifacts created, skipping analysis result generation")
-    #         return
+        # created_artifacts가 비어있으면 조기 종료
+        if not self.created_artifacts:
+            self.dev_logger.warning("⚠️ [DEV] No artifacts created, skipping analysis result generation")
+            return
         
-    #     # 각 행위 유형별로 아티팩트 분석
-    #     for behavior_type in BehaviorType:
-    #         self.dev_logger.debug(f"🔍 [DEV] Analyzing behavior type: {behavior_type.name}")
-            
-    #         # 해당 행위와 관련된 아티팩트 수집
-    #         related_artifacts = self._get_artifacts_by_behavior(behavior_type)
-            
-    #         if not related_artifacts:
-    #             self.dev_logger.debug(f"ℹ️ [DEV] No artifacts found for {behavior_type.name}")
-    #             continue
-            
-    #         # 아티팩트 ID 목록 추출
-    #         artifact_ids = [artifact.get('id') or artifact.get('artifact_id') 
-    #                     for artifact in related_artifacts 
-    #                     if artifact.get('id') or artifact.get('artifact_id')]
-            
-    #         # 분석 요약 생성
-    #         analysis_summary = self._create_analysis_summary(behavior_type, related_artifacts)
-            
-    #         # 위험도 평가
-    #         risk_level = self._evaluate_risk_level(behavior_type, related_artifacts)
-            
-    #         # 결과 업데이트
-    #         if behavior_type in self.analyze_results:
-    #             self.analyze_results[behavior_type].update({
-    #                 "artifact_ids": artifact_ids,
-    #                 "analysis_summary": analysis_summary,
-    #                 "risk_level": risk_level,
-    #                 "artifact_count": len(artifact_ids)
-    #             })
+        # 행위별 아티팩트 분류
+        behavior_artifacts = self._classify_artifacts_by_behavior(self.created_artifacts)
+        
+        # 각 행위별로 분석 결과 생성
+        for behavior_type in BehaviorType:
+            if behavior_type in self.analyze_results:
+                artifacts_for_behavior = behavior_artifacts.get(behavior_type, [])
+                artifact_ids = [artifact.get('id') or artifact.get('artifact_id') 
+                              for artifact in artifacts_for_behavior 
+                              if artifact.get('id') or artifact.get('artifact_id')]
                 
-    #             self.dev_logger.info(
-    #                 f"✅ [DEV] Updated {behavior_type.name}: "
-    #                 f"{len(artifact_ids)} artifacts, risk={risk_level}"
-    #             )
+                # 행위별 분석 요약 생성
+                analysis_summary = self._create_behavior_analysis_summary(behavior_type, artifacts_for_behavior)
+                
+                # 행위별 위험도 평가
+                risk_level = self._evaluate_behavior_risk_level(behavior_type, artifacts_for_behavior)
+                
+                self.analyze_results[behavior_type].update({
+                    "artifact_ids": artifact_ids,
+                    "analysis_summary": analysis_summary,
+                    "risk_level": risk_level,
+                    "artifact_count": len(artifact_ids)
+                })
+                
+                self.dev_logger.info(
+                    f"✅ [DEV] {behavior_type.name}: {len(artifact_ids)} artifacts, risk={risk_level}"
+                )
         
-    #     # 전체 분석 통계 로깅
-    #     self._log_analysis_statistics()
+        # 전체 분석 통계 로깅
+        self._log_behavior_analysis_statistics(behavior_artifacts)
         
-    #     self.dev_logger.info("✅ [DEV] Completed _generate_analysis_result")
+        self.dev_logger.info("✅ [DEV] Completed _generate_analysis_result (Behavior-specific Classification)")
 
 
-    # def _get_artifacts_by_behavior(self, behavior_type: BehaviorType) -> List[dict]:
-    #     """특정 행위 유형과 관련된 아티팩트 필터링"""
-    #     related_artifacts = []
+    def _classify_artifacts_by_behavior(self, artifacts: List[dict]) -> Dict[BehaviorType, List[dict]]:
+        """아티팩트를 행위별로 분류"""
+        behavior_artifacts = {behavior: [] for behavior in BehaviorType}
         
-    #     for artifact in self.created_artifacts:
-    #         # 아티팩트의 카테고리나 메타데이터를 기반으로 행위 유형 매칭
-    #         artifact_behavior = artifact.get('behavior_type') or artifact.get('category')
+        for artifact in artifacts:
+            artifact_type = artifact.get('artifact_type', '')
             
-    #         # 직접 매칭
-    #         if artifact_behavior == behavior_type:
-    #             related_artifacts.append(artifact)
-    #             continue
+            # Acquisition (획득) - 다운로드, 브라우저, 메신저 관련
+            if any(keyword in artifact_type.lower() for keyword in [
+                'downloads', 'browser', 'messenger', 'discord', 'kakaotalk', 
+                'urls', 'visits', 'autofill', 'logins'
+            ]):
+                behavior_artifacts[BehaviorType.acquisition].append(artifact)
             
-    #         # 카테고리 기반 매핑
-    #         if self._is_artifact_related_to_behavior(artifact, behavior_type):
-    #             related_artifacts.append(artifact)
+            # Deletion (삭제) - 휴지통, 삭제된 파일 관련
+            elif any(keyword in artifact_type.lower() for keyword in [
+                'deleted', 'recycle', 'mft_deleted'
+            ]):
+                behavior_artifacts[BehaviorType.deletion].append(artifact)
+            
+            # Forgery (위조) - LNK 파일, Prefetch 관련
+            elif any(keyword in artifact_type.lower() for keyword in [
+                'lnk', 'prefetch'
+            ]):
+                behavior_artifacts[BehaviorType.forgery].append(artifact)
+            
+            # Upload (업로드) - USB 장치 관련
+            elif any(keyword in artifact_type.lower() for keyword in [
+                'usb'
+            ]):
+                behavior_artifacts[BehaviorType.upload].append(artifact)
+            
+            # Etc (기타) - 나머지 모든 것
+            else:
+                behavior_artifacts[BehaviorType.etc].append(artifact)
         
-    #     return related_artifacts
+        return behavior_artifacts
 
+    def _create_behavior_analysis_summary(self, behavior_type: BehaviorType, artifacts: List[dict]) -> str:
+        """행위별 분석 요약 생성"""
+        artifact_count = len(artifacts)
+        
+        if artifact_count == 0:
+            return f"No artifacts found for {behavior_type.name} behavior."
+        
+        # 아티팩트 타입별 통계
+        type_counts = {}
+        for artifact in artifacts:
+            artifact_type = artifact.get('artifact_type', 'unknown')
+            type_counts[artifact_type] = type_counts.get(artifact_type, 0) + 1
+        
+        # 상위 타입들
+        top_types = sorted(type_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+        type_summary = ", ".join([f"{atype}: {count}" for atype, count in top_types])
+        
+        return (f"Analysis of {artifact_count} artifacts for {behavior_type.name} behavior. "
+                f"Top artifact types: {type_summary}")
 
-    # def _is_artifact_related_to_behavior(self, artifact: dict, behavior_type: BehaviorType) -> bool:
-    #     """아티팩트가 특정 행위 유형과 관련이 있는지 판단"""
-    #     category = artifact.get('category', '').lower()
-    #     artifact_type = artifact.get('type', '').lower()
-    #     file_name = artifact.get('file_name', '').lower()
-        
-    #     # 행위 유형별 매핑 규칙
-    #     behavior_mappings = {
-    #         BehaviorType.USB_USAGE: ['usb', 'external_device', 'removable'],
-    #         BehaviorType.FILE_ACCESS: ['lnk', 'shortcut', 'recent', 'jump_list'],
-    #         BehaviorType.WEB_BROWSING: ['browser', 'chrome', 'edge', 'firefox', 'url', 'download'],
-    #         BehaviorType.MESSENGER_USAGE: ['messenger', 'kakao', 'discord', 'telegram', 'chat'],
-    #         BehaviorType.PROGRAM_EXECUTION: ['prefetch', 'execution', 'process', 'application'],
-    #         BehaviorType.FILE_DELETION: ['deleted', 'recycle', 'mft_deleted', 'removed'],
-    #         BehaviorType.DATA_EXFILTRATION: ['download', 'transfer', 'upload', 'export'],
-    #     }
-        
-    #     # 해당 행위 유형의 키워드 확인
-    #     keywords = behavior_mappings.get(behavior_type, [])
-        
-    #     return any(keyword in category or keyword in artifact_type or keyword in file_name 
-    #             for keyword in keywords)
+    def _evaluate_behavior_risk_level(self, behavior_type: BehaviorType, artifacts: List[dict]) -> str:
+        """행위별 위험도 평가 - 모든 행위를 normal로 설정"""
+        # 위험도 평가 없이 모든 행위를 normal로 설정
+        return 'normal'
 
-
-    # def _create_analysis_summary(self, behavior_type: BehaviorType, artifacts: List[dict]) -> str:
-    #     """행위 유형별 분석 요약 생성"""
-    #     artifact_count = len(artifacts)
+    def _log_behavior_analysis_statistics(self, behavior_artifacts: Dict[BehaviorType, List[dict]]):
+        """행위별 분석 통계 로깅"""
+        total_artifacts = sum(len(artifacts) for artifacts in behavior_artifacts.values())
         
-    #     # 행위 유형별 요약 템플릿
-    #     summary_templates = {
-    #         BehaviorType.USB_USAGE: self._summarize_usb_usage,
-    #         BehaviorType.FILE_ACCESS: self._summarize_file_access,
-    #         BehaviorType.WEB_BROWSING: self._summarize_web_browsing,
-    #         BehaviorType.MESSENGER_USAGE: self._summarize_messenger_usage,
-    #         BehaviorType.PROGRAM_EXECUTION: self._summarize_program_execution,
-    #         BehaviorType.FILE_DELETION: self._summarize_file_deletion,
-    #         BehaviorType.DATA_EXFILTRATION: self._summarize_data_exfiltration,
-    #     }
+        self.dev_logger.info("=" * 80)
+        self.dev_logger.info("📊 [DEV] Behavior-specific Analysis Statistics")
+        self.dev_logger.info("=" * 80)
         
-    #     # 해당 행위에 맞는 요약 함수 실행
-    #     summarize_func = summary_templates.get(behavior_type)
-    #     if summarize_func:
-    #         return summarize_func(artifacts)
+        # 행위별 통계
+        self.dev_logger.info("🔍 Behavior-wise Statistics:")
+        for behavior_type, artifacts in behavior_artifacts.items():
+            count = len(artifacts)
+            percentage = (count / total_artifacts * 100) if total_artifacts > 0 else 0
+            risk_level = self.analyze_results[behavior_type].get('risk_level', 'unknown')
+            
+            self.dev_logger.info(
+                f"  • {behavior_type.name}: {count:,} artifacts ({percentage:.1f}%) - Risk: {risk_level}"
+            )
         
-    #     # 기본 요약
-    #     return f"Found {artifact_count} artifact(s) related to {behavior_type.name}"
-
-
-    # def _summarize_usb_usage(self, artifacts: List[dict]) -> str:
-    #     """USB 사용 분석 요약"""
-    #     device_count = len(set(a.get('device_id') for a in artifacts if a.get('device_id')))
-    #     connection_count = sum(a.get('connection_count', 1) for a in artifacts)
+        # 필터링 효과 통계
+        total_original_rows = getattr(self, '_total_original_rows', 0)
+        total_filtered_rows = getattr(self, '_total_filtered_rows', 0)
+        filtering_reduction = total_original_rows - total_filtered_rows
+        filtering_percentage = (filtering_reduction / total_original_rows * 100) if total_original_rows > 0 else 0
         
-    #     return (f"Detected {device_count} unique USB device(s) with "
-    #             f"{connection_count} total connection(s). "
-    #             f"Analysis based on {len(artifacts)} artifact(s).")
-
-
-    # def _summarize_file_access(self, artifacts: List[dict]) -> str:
-    #     """파일 접근 분석 요약"""
-    #     file_types = set()
-    #     for artifact in artifacts:
-    #         file_name = artifact.get('file_name', '')
-    #         if '.' in file_name:
-    #             ext = file_name.rsplit('.', 1)[-1].lower()
-    #             file_types.add(ext)
+        if total_original_rows > 0:
+            self.dev_logger.info("\n📉 Filtering Effectiveness:")
+            self.dev_logger.info(f"  • Original Data: {total_original_rows:,} rows")
+            self.dev_logger.info(f"  • Filtered Data: {total_filtered_rows:,} rows")
+            self.dev_logger.info(f"  • Reduction: {filtering_reduction:,} rows ({filtering_percentage:.1f}%)")
         
-    #     accessed_files = len(artifacts)
-    #     return (f"Analyzed {accessed_files} file access record(s) "
-    #             f"across {len(file_types)} file type(s): {', '.join(sorted(file_types)[:5])}")
-
-
-    # def _summarize_web_browsing(self, artifacts: List[dict]) -> str:
-    #     """웹 브라우징 분석 요약"""
-    #     url_count = sum(1 for a in artifacts if 'url' in str(a.get('type', '')).lower())
-    #     download_count = sum(1 for a in artifacts if 'download' in str(a.get('type', '')).lower())
-        
-    #     return (f"Analyzed {len(artifacts)} web browsing artifact(s): "
-    #             f"{url_count} URL visit(s), {download_count} download(s)")
-
-
-    # def _summarize_messenger_usage(self, artifacts: List[dict]) -> str:
-    #     """메신저 사용 분석 요약"""
-    #     messenger_types = set(a.get('messenger_type') for a in artifacts if a.get('messenger_type'))
-    #     file_count = len(artifacts)
-        
-    #     if messenger_types:
-    #         messengers = ', '.join(sorted(messenger_types))
-    #         return f"Detected {file_count} messenger file(s) from: {messengers}"
-        
-    #     return f"Detected {file_count} messenger-related file(s)"
-
-
-    # def _summarize_program_execution(self, artifacts: List[dict]) -> str:
-    #     """프로그램 실행 분석 요약"""
-    #     programs = set(a.get('program_name') or a.get('executable_name') 
-    #                 for a in artifacts 
-    #                 if a.get('program_name') or a.get('executable_name'))
-        
-    #     return (f"Identified {len(programs)} unique program(s) executed. "
-    #             f"Total {len(artifacts)} execution record(s).")
-
-
-    # def _summarize_file_deletion(self, artifacts: List[dict]) -> str:
-    #     """파일 삭제 분석 요약"""
-    #     deleted_count = len(artifacts)
-    #     total_size = sum(a.get('file_size', 0) for a in artifacts)
-        
-    #     size_mb = total_size / (1024 * 1024) if total_size > 0 else 0
-    #     return (f"Found {deleted_count} deleted file(s). "
-    #             f"Total size: {size_mb:.2f} MB")
-
-
-    # def _summarize_data_exfiltration(self, artifacts: List[dict]) -> str:
-    #     """데이터 유출 분석 요약"""
-    #     transfer_count = len(artifacts)
-    #     suspicious_count = sum(1 for a in artifacts if a.get('is_suspicious', False))
-        
-    #     return (f"Detected {transfer_count} data transfer event(s). "
-    #             f"{suspicious_count} flagged as potentially suspicious.")
-
-
-    # def _evaluate_risk_level(self, behavior_type: BehaviorType, artifacts: List[dict]) -> str:
-    #     """위험도 평가"""
-    #     artifact_count = len(artifacts)
-        
-    #     # 행위 유형별 기본 위험도
-    #     base_risk = {
-    #         BehaviorType.DATA_EXFILTRATION: 'HIGH',
-    #         BehaviorType.FILE_DELETION: 'MEDIUM',
-    #         BehaviorType.USB_USAGE: 'MEDIUM',
-    #         BehaviorType.WEB_BROWSING: 'LOW',
-    #         BehaviorType.MESSENGER_USAGE: 'LOW',
-    #         BehaviorType.FILE_ACCESS: 'LOW',
-    #         BehaviorType.PROGRAM_EXECUTION: 'LOW',
-    #     }
-        
-    #     risk = base_risk.get(behavior_type, 'LOW')
-        
-    #     # 아티팩트 수에 따른 위험도 조정
-    #     if artifact_count > 100:
-    #         if risk == 'LOW':
-    #             risk = 'MEDIUM'
-    #         elif risk == 'MEDIUM':
-    #             risk = 'HIGH'
-    #     elif artifact_count > 50:
-    #         if risk == 'LOW':
-    #             risk = 'MEDIUM'
-        
-    #     # 의심스러운 패턴 감지
-    #     suspicious_count = sum(1 for a in artifacts if a.get('is_suspicious', False))
-    #     if suspicious_count > artifact_count * 0.3:  # 30% 이상이 의심스러운 경우
-    #         if risk == 'LOW':
-    #             risk = 'MEDIUM'
-    #         elif risk == 'MEDIUM':
-    #             risk = 'HIGH'
-        
-    #     return risk
-
-
-    # def _log_analysis_statistics(self):
-    #     """전체 분석 통계 로깅 - 업그레이드된 버전"""
-    #     total_artifacts = len(self.created_artifacts)
-    #     behaviors_with_data = sum(1 for result in self.analyze_results.values() 
-    #                             if result.get('artifact_count', 0) > 0)
-        
-    #     high_risk_count = sum(1 for result in self.analyze_results.values() 
-    #                         if result.get('risk_level') == 'HIGH')
-    #     medium_risk_count = sum(1 for result in self.analyze_results.values() 
-    #                         if result.get('risk_level') == 'MEDIUM')
-    #     low_risk_count = sum(1 for result in self.analyze_results.values() 
-    #                         if result.get('risk_level') == 'LOW')
-        
-    #     # 카테고리별 통계 계산
-    #     category_stats = {}
-    #     for artifact in self.created_artifacts:
-    #         category = artifact.get('category', 'Unknown')
-    #         if category not in category_stats:
-    #             category_stats[category] = {'count': 0, 'risk_levels': []}
-    #         category_stats[category]['count'] += 1
-    #         category_stats[category]['risk_levels'].append(artifact.get('risk_level', 'UNKNOWN'))
-        
-    #     # 필터링 효과 통계 (원본 데이터와 비교)
-    #     total_original_rows = getattr(self, '_total_original_rows', 0)
-    #     total_filtered_rows = getattr(self, '_total_filtered_rows', 0)
-    #     filtering_reduction = total_original_rows - total_filtered_rows
-    #     filtering_percentage = (filtering_reduction / total_original_rows * 100) if total_original_rows > 0 else 0
-        
-    #     # 상세 통계 로깅
-    #     self.dev_logger.info("=" * 80)
-    #     self.dev_logger.info("📊 [DEV] Enhanced Analysis Statistics Summary")
-    #     self.dev_logger.info("=" * 80)
-        
-    #     # 기본 통계
-    #     self.dev_logger.info("🔍 Basic Statistics:")
-    #     self.dev_logger.info(f"  • Total Artifacts: {total_artifacts:,}")
-    #     self.dev_logger.info(f"  • Behaviors with Data: {behaviors_with_data}/{len(BehaviorType)}")
-    #     self.dev_logger.info(f"  • Data Coverage: {(behaviors_with_data/len(BehaviorType)*100):.1f}%")
-        
-    #     # 위험도 분포
-    #     self.dev_logger.info("\n⚠️ Risk Level Distribution:")
-    #     self.dev_logger.info(f"  • High Risk: {high_risk_count} behaviors")
-    #     self.dev_logger.info(f"  • Medium Risk: {medium_risk_count} behaviors")
-    #     self.dev_logger.info(f"  • Low Risk: {low_risk_count} behaviors")
-        
-    #     # 필터링 효과
-    #     if total_original_rows > 0:
-    #         self.dev_logger.info("\n📉 Filtering Effectiveness:")
-    #         self.dev_logger.info(f"  • Original Data: {total_original_rows:,} rows")
-    #         self.dev_logger.info(f"  • Filtered Data: {total_filtered_rows:,} rows")
-    #         self.dev_logger.info(f"  • Reduction: {filtering_reduction:,} rows ({filtering_percentage:.1f}%)")
-        
-    #     # 카테고리별 통계
-    #     if category_stats:
-    #         self.dev_logger.info("\n📁 Category-wise Statistics:")
-    #         for category, stats in sorted(category_stats.items()):
-    #             risk_distribution = {}
-    #             for risk in stats['risk_levels']:
-    #                 risk_distribution[risk] = risk_distribution.get(risk, 0) + 1
-                
-    #             risk_str = ", ".join([f"{risk}: {count}" for risk, count in risk_distribution.items()])
-    #             self.dev_logger.info(f"  • {category}: {stats['count']} artifacts ({risk_str})")
-        
-    #     # 행위별 상세 통계
-    #     self.dev_logger.info("\n🎯 Behavior-wise Details:")
-    #     for behavior_type, result in self.analyze_results.items():
-    #         artifact_count = result.get('artifact_count', 0)
-    #         if artifact_count > 0:
-    #             risk_level = result.get('risk_level', 'UNKNOWN')
-    #             analysis_summary = result.get('analysis_summary', 'No summary available')
-                
-    #             # 위험도에 따른 이모지
-    #             risk_emoji = {
-    #                 'HIGH': '🔴',
-    #                 'MEDIUM': '🟡', 
-    #                 'LOW': '🟢',
-    #                 'UNKNOWN': '⚪'
-    #             }.get(risk_level, '⚪')
-                
-    #             self.dev_logger.info(f"  {risk_emoji} {behavior_type.name}:")
-    #             self.dev_logger.info(f"    • Artifacts: {artifact_count}")
-    #             self.dev_logger.info(f"    • Risk Level: {risk_level}")
-    #             self.dev_logger.info(f"    • Summary: {analysis_summary[:100]}{'...' if len(analysis_summary) > 100 else ''}")
-        
-    #     # 성능 통계
-    #     processing_time = getattr(self, '_processing_time', 0)
-    #     if processing_time > 0:
-    #         self.dev_logger.info(f"\n⏱️ Performance:")
-    #         self.dev_logger.info(f"  • Processing Time: {processing_time:.2f} seconds")
-    #         if total_artifacts > 0:
-    #             self.dev_logger.info(f"  • Artifacts per Second: {total_artifacts/processing_time:.2f}")
-        
-    #     self.dev_logger.info("=" * 80)
-
+        self.dev_logger.info("=" * 80)
