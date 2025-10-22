@@ -18,7 +18,7 @@ def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCrea
     )
 
     initial_state = cast(AgentState, initial_state)
-    final_state = app.invoke(initial_state)
+    final_state = app.invoke(initial_state, config={"recursion_limit": 80})
     return final_state["final_report"], final_state["context"]
 
 def invoke_scenarios_test(artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> tuple[ScenarioCreate, str]:

@@ -6,8 +6,8 @@ import pandas as pd
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
-from testAnalyzer import TestAnalyzer, BackendClient, Category, ResultDataFrames, ResultDataFrame
-from Analyzer import BehaviorType
+from test.testAnalyzer import TestAnalyzer, BackendClient, Category, ResultDataFrames, ResultDataFrame
+from test.Analyzer import BehaviorType
 
 class DevAnalyzer(TestAnalyzer):
     def __init__(self, backend_client: BackendClient, time_filter_months: int = 7) -> None:

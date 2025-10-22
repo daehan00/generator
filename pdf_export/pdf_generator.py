@@ -14,7 +14,98 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from datetime import datetime
 
+# ===================================================================
+# PDF 보고서 섹션 매핑 정의
+# ===================================================================
+
+# 소분류 섹션 제목 (section_type 기준)
+SECTION_TITLES = {
+    0: "분석 목적",
+    1: "데이터 수집",
+    2: "분석 일정",
+    3: "분석 방법 및 절차",
+    4: "분석의 한계",
+    5: "분석 요약",
+    6: "취득 행위",
+    7: "유출 행위",
+    8: "증거 인멸 행위",
+    9: "기타 의심 행위",
+    10: "종합 의견 및 재구성",
+    11: "확인된 사실"
+}
+
+# 대분류 구조 정의
+MAIN_SECTIONS = {
+    1: "개요",
+    2: "분석 요약 및 상세",
+    3: "분석 결과"
+}
+
+# 소분류 → 대분류 매핑
+SECTION_TO_MAIN_MAPPING = {
+    0: 1,  # 분석 목적 → 개요
+    1: 1,  # 데이터 수집 → 개요
+    2: 1,  # 분석 일정 → 개요
+    3: 1,  # 분석 방법 및 절차 → 개요
+    4: 1,  # 분석의 한계 → 개요
+    5: 2,  # 분석 요약 → 분석 요약 및 상세
+    6: 2,  # 취득 행위 → 분석 요약 및 상세
+    7: 2,  # 유출 행위 → 분석 요약 및 상세
+    8: 2,  # 증거 인멸 행위 → 분석 요약 및 상세
+    9: 2,  # 확인된 사실 → 분석 요약 및 상세
+    10: 3, # 종합 의견 및 재구성 → 분석 결과
+    11: 3  # 기타 의심 행위 → 분석 결과
+}
+
+
+def transform_flat_to_hierarchical(details: List[dict]) -> List[dict]:
+    # 1. section_type별로 그룹화
+    section_groups = defaultdict(list)
+    for detail in details:
+        section_type = detail.get('section_type', 0)
+        section_groups[section_type].append(detail)
+    
+    # 2. 대분류별로 소분류 항목들을 그룹화
+    main_section_groups = defaultdict(list)
+    
+    for section_type in sorted(section_groups.keys()):
+        main_section_id = SECTION_TO_MAIN_MAPPING.get(section_type, 3)  # 기본값: 분석 결과
+        
+        items = section_groups[section_type]
+        for item in items:
+            main_section_groups[main_section_id].append({
+                'section_type': section_type,
+                'content': item.get('content', '')
+            })
+    
+    # 3. 계층 구조 생성
+    transformed_details = []
+    
+    for main_section_id in sorted(main_section_groups.keys()):
+        main_title = MAIN_SECTIONS.get(main_section_id, f"섹션 {main_section_id}")
+        items = main_section_groups[main_section_id]
+        
+        # sections 리스트 생성
+        sections = []
+        for idx, item in enumerate(items, 1):
+            section_type = item['section_type']
+            section_title = SECTION_TITLES.get(section_type, f"소분류 {section_type}")
+            
+            sections.append({
+                'section_order': idx,
+                'section_title': section_title,
+                'content': item['content']
+            })
+        
+        transformed_details.append({
+            'main_order': main_section_id,
+            'main_title': main_title,
+            'sections': sections
+        })
+    
+    return transformed_details
 
 @dataclass
 class ReportData:
@@ -1077,11 +1168,35 @@ class SecurityReportPDF:
     
     def generate_from_json(self, json_data, output_path: str):
         """JSON 데이터로부터 PDF 생성 (새로운 계층 구조 지원)"""
+        from datetime import datetime
+
         report_meta = json_data.get("report", {})
+
+        # 회사명 추출 (summary에서 대괄호 제거)
+        summary = report_meta.get("summary", "[의뢰 회사 이름]")
+        company_name = summary.strip("[]") if summary else "의뢰 회사 이름"
+
+        # PC ID 추출
+        pc_name = report_meta.get("pc_id", "TEST-PC-001")
+
+        # UTC ISO 날짜를 한국어 형식으로 변환
+        created_at = report_meta.get("created_at", "")
+        if created_at:
+            try:
+                # ISO 8601 형식 파싱 (2025-10-22T04:48:00.237Z)
+                dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                # 한국어 형식으로 변환 (2025년 10월 22일)
+                date_str = f"{dt.year}년 {dt.month}월 {dt.day}일"
+            except Exception as e:
+                print(f"⚠️ 날짜 변환 실패: {e}, 기본값 사용")
+                date_str = "2025년 10월 22일"
+        else:
+            date_str = "2025년 10월 22일"
+
         data = ReportData(
-            company_name=report_meta.get("summary", "[의뢰 회사 이름]"),
-            pc_name=report_meta.get("pc_id", "[TEST-PC-001]"),
-            date=report_meta.get("created_at", "2025년 10월 15일")
+            company_name=company_name,
+            pc_name=pc_name,
+            date=date_str
         )
 
         print("=" * 60)

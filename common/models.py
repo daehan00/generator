@@ -33,6 +33,7 @@ class SectionTypeEnum(int, enum.Enum):
     detailed_analysis = 8 # 상세 분석 -> analysis_results 들어감.
     Scenario_synthesis = 9 # 시나리오 종합
     result = 10 # 결과 종합 및 의견 제시
+    etc = 11 # 기타 의심 행위
 
 class ReportBase(BaseModel):
     title: str = Field(..., description="보고서 제목")

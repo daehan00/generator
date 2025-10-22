@@ -5,10 +5,9 @@ PDF Report Exporter
 
 import os
 import tempfile
-from typing import Optional
-from .pdf_generator import SecurityReportPDF
-from .s3_manager import S3Manager
-
+from typing import Optional  # ✅ 이 줄 추가
+from pdf_export.pdf_generator import SecurityReportPDF
+from pdf_export.s3_manager import S3Manager
 
 class PDFReportExporter:
     """
@@ -74,9 +73,11 @@ class PDFReportExporter:
             print("📤 S3 업로드 시작...")
             print("=" * 60)
             
-            # 4. S3 업로드
+            # 4. S3 업로드 (타임스탬프 없이 업로드)
+            s3_key = self.s3_manager.generate_s3_key(filename, include_timestamp=False)
             s3_url = self.s3_manager.upload_file(
                 local_path=temp_path,
+                s3_key=s3_key,
                 metadata={
                     'report-id': report_data.get('report', {}).get('id', ''),
                     'pc-id': report_data.get('report', {}).get('pc_id', ''),
