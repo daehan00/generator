@@ -1,5 +1,7 @@
 import logging
-from typing import Any, Optional, List
+import uuid
+from typing import Any, Optional, List, Dict
+import datetime
 from unknown_data.test import TestHelper
 from unknown_data.loader.base import Config_db
 from common.models import ReportCreate, ScenarioCreate
@@ -341,13 +343,14 @@ class TestBackendClient:
             logger.error(f"[Test] Scenario validation failed: {e}")
             return False
 
-    def save_report(self, report: ReportCreate, user_id: str, job_id: str) -> bool:
+    def save_report(self, report: ReportCreate, user_id: str, job_id: str) -> Dict[str, Any]:
         """
-        리포트 저장을 시뮬레이션하고 데이터를 검증합니다.
+        리포트 저장을 시뮬레이션하고 API와 유사한 형식으로 응답합니다.
         """
         logger.info(f"[Test] save_report called for task {report.task_id}")
         logger.debug(report.model_dump())
         try:
+            # 입력값 검증
             assert report.task_id, "task_id is required"
             assert report.pc_id, "pc_id is required"
             assert report.title, "title is required"
@@ -355,11 +358,46 @@ class TestBackendClient:
             assert isinstance(report.details, list), "details must be a list"
             assert user_id, "user_id is required"
             assert job_id, "job_id is required"
+            
             logger.info(f"[Test] Report for task {report.task_id} passed validation.")
-            return True
+            
+            # API 응답 형식으로 데이터 생성
+            report_id = str(uuid.uuid4())
+            created_at = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+            
+            response = {
+                "report": {
+                    "id": report_id,
+                    "title": report.title,
+                    "summary": report.summary or "",
+                    "pc_id": report.pc_id,
+                    "created_at": created_at,
+                    "created_by": user_id,
+                    "link": f"/reports/{report_id}"
+                },
+                "details": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "report_id": report_id,
+                        "section_type": detail.section_type.value,
+                        "content": detail.content or "",
+                        "order_no": detail.order_no if detail.order_no is not None else idx,
+                        "created_at": created_at
+                    }
+                    for idx, detail in enumerate(report.details)
+                ]
+            }
+            
+            logger.info(f"[Test] Report response generated successfully with id {report_id}")
+            logger.debug(response)
+            return response
+            
         except AssertionError as e:
             logger.error(f"[Test] Report validation failed: {e}")
-            return False
+            raise ValueError(f"Report validation failed: {e}")
+        except Exception as e:
+            logger.error(f"[Test] Error generating report response: {e}")
+            raise
 
     def link_scenario_to_report_details(self, job_id: str, task_id: str, report_detail_id: str):
         """
