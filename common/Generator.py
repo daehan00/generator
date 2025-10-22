@@ -5,6 +5,7 @@ from common.agent import invoke_scenarios
 from common.report_exporters import invoke_report_details
 from common.models import SectionTypeEnum, ReportCreate, ReportDetailCreate
 from common.models import ScenarioCreate
+from common.sample import sample_create_data
 
 class Generator:
     def __init__(self) -> None:
@@ -35,7 +36,7 @@ class Generator:
             raise RuntimeError(f"Failed to save report for task {task_id}. Report generation failed.")
         
         # 6. 보고서 pdf 처리
-        self._generate_pdf_report()
+        self._generate_pdf_report(report_saved)
 
     def _generate_scenarios(self, artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> None:
         # 1. llm service를 호출해서 시나리오 생성
@@ -70,5 +71,29 @@ class Generator:
                 order_no=None
             ))
 
-    def _generate_pdf_report(self):
+    def _generate_pdf_report(self, report: dict[str, Any]):
+        # 1. 입력값 검증
+
+        # 2. 임시 pdf 파일 생성
+
+        # 3. 버킷에 저장
+
+        # 4. 임시파일 삭제
+
+        # 성공!
         pass
+
+
+
+    ### pdf 생성 테스트용 코드
+    def _test_pdf_create(self, backend_client: BackendClient):
+        task_id = "test_task_id"
+        job_id = "test_job_id"
+        
+        job_info = backend_client.load_job_info(task_id, job_id)
+        
+        user_id = job_info.get("user_id", "system")
+        report_create_data = ReportCreate(**sample_create_data)
+        report_response = backend_client.save_report(report_create_data, user_id, job_id)
+
+        self._generate_pdf_report(report_response)
