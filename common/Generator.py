@@ -35,7 +35,7 @@ class Generator:
             raise RuntimeError(f"Failed to save report for task {task_id}. Report generation failed.")
         
         # 6. 보고서 pdf 처리
-        self._generate_pdf_report()
+        self._generate_pdf_report(report_saved)
 
     def _generate_scenarios(self, artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> None:
         # 1. llm service를 호출해서 시나리오 생성
@@ -70,5 +70,65 @@ class Generator:
                 order_no=None
             ))
 
-    def _generate_pdf_report(self):
-        pass
+        def _generate_pdf_report(self, data: dict[str, Any]):
+            """
+            보고서 데이터를 PDF로 변환하고 S3에 업로드
+            
+            Args:
+                data: save_report()에서 반환된 보고서 전체 데이터
+                    - report: 보고서 메타데이터 (id, pc_id, created_at 등)
+                    - details: 보고서 섹션 리스트
+            
+            Returns:
+                str: S3 업로드된 PDF URL (성공시), None (실패시)
+            """
+            try:
+                # PDF Export 모듈 임포트
+                from pdf_export import PDFReportExporter
+                
+                print("\n" + "=" * 60)
+                print("📄 보고서 PDF 변환 프로세스 시작")
+                print("=" * 60)
+                
+                # PDFReportExporter 인스턴스 생성
+                exporter = PDFReportExporter()
+                
+                # 커스텀 파일명 생성
+                report_id = data.get('report', {}).get('id', 'unknown')
+                pc_id = data.get('report', {}).get('pc_id', 'unknown')
+                custom_filename = f"forensic_report_{pc_id}_{report_id[:8]}"
+                
+                print(f"📋 보고서 ID: {report_id}")
+                print(f"💻 PC ID: {pc_id}")
+                print(f"📝 파일명: {custom_filename}.pdf")
+                
+                # PDF 생성 및 S3 업로드
+                pdf_url = exporter.generate_and_upload(
+                    report_data=data,
+                    delete_local=True,  # 임시 파일 자동 삭제
+                    custom_filename=custom_filename
+                )
+                
+                if pdf_url:
+                    print("\n" + "=" * 60)
+                    print("✅ 보고서 PDF 처리 완료!")
+                    print(f"🌐 PDF URL: {pdf_url}")
+                    print("=" * 60 + "\n")
+                    return pdf_url
+                else:
+                    print("\n" + "=" * 60)
+                    print("❌ PDF 생성 또는 업로드 실패")
+                    print("=" * 60 + "\n")
+                    return None
+                    
+            except ImportError as e:
+                print(f"❌ PDF Export 모듈을 찾을 수 없습니다: {e}")
+                print("💡 pdf_export 패키지가 설치되어 있는지 확인하세요.")
+                return None
+                
+            except Exception as e:
+                print("\n" + "=" * 60)
+                print(f"❌ PDF 생성 중 예상치 못한 오류 발생")
+                print(f"🔍 오류 내용: {e}")
+                print("=" * 60 + "\n")
+                return None

@@ -7,9 +7,9 @@ from .exporter import PDFReportExporter
 from .pdf_generator import SecurityReportPDF
 from .s3_manager import S3Manager
 
-__all__ = ['PDFReportExporter', 'SecurityReportPDF', 'S3Manager']
+__all__ = ['PDFReportExporter', 'SecurityReportPDF', 'S3Manager', 'export_report_to_pdf']
 
-# 편의 함수
+
 def export_report_to_pdf(report_data: dict, delete_local: bool = True) -> str:
     """
     보고서를 PDF로 변환하고 S3에 업로드하는 간편 함수
@@ -22,6 +22,7 @@ def export_report_to_pdf(report_data: dict, delete_local: bool = True) -> str:
         S3 업로드된 PDF URL
     
     Example:
+        >>> from pdf_export import export_report_to_pdf
         >>> report = generate_report()
         >>> pdf_url = export_report_to_pdf(report)
         >>> print(f"PDF URL: {pdf_url}")
