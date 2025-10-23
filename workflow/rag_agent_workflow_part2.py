@@ -76,16 +76,16 @@ if __name__ == "__main__":
         "task_id": "test_task_001",
         "job_info": {
             "description": "정보유출 의심 사례 분석",
-            "pc_username": "이정호",
-            "pc_userrank": "주임",
-            "pc_usercompany": "한국정보보호산업협회"
+            "pc_username": "조민하",
+            "pc_userrank": "직원",
+            "pc_usercompany": "프리렌서"
         },
         "collection_name": "artifacts_collection",
         "db_config": None,
         "filtered_artifacts": [],  # Part 1에서 필터링된 아티팩트 (실제로는 데이터 있음)
         "data_save_status": "success",
-        "raw_user_requirements": """사내에서 활용되는 교육생 개인정보유출 의심 활동을 분석해주세요. 추가로, 이직 정황에 대해서 파악해주세요. 단순 이직 의사를 넘어서 실질적으로 이직을 시도했는지 알고 싶습니다.
-이정호 주임은 한국정보보호산업협회에서 교육프로그램 운영 실무자로, 보안 전문가 육성 관련 프로그램을 기획하고 진행하는 업무를 합니다. 따라서 기존 업무의 특성을 고려하여 정보를 수집해 주세요."""
+        "raw_user_requirements": """프리렌서입니다. 주로 문서 작업을 하고 코드를 작성하는 프로젝트를 진행합니다. 내부 유출, 이직 정황에 대해서 파악해주세요. 단순 이직 의사를 넘어서 실질적으로 이직을 시도했는지 알고 싶습니다.
+ 따라서 기존 업무의 특성을 고려하여 정보를 수집해 주세요."""
     }
     
     print("📝 초기 상태:")

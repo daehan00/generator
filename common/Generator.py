@@ -144,7 +144,7 @@ class Generator:
             self.logger.debug("PDF 생성 및 S3 업로드 시작...")
             pdf_url = exporter.generate_and_upload(
                 report_data=transformed_data,
-                delete_local=True,
+                delete_local=False,
                 custom_filename=custom_filename
             )
             
