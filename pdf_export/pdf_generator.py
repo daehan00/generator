@@ -118,7 +118,7 @@ class SecurityReportPDF:
     def __init__(self):
         self.width, self.height = A4
         self.font = self._setup_fonts()
-        self.canvas = None
+        self.canvas = canvas.Canvas("")
 
         # ✅ 정밀 측정: 왼쪽 여백 40pt
         self.left = 40
@@ -946,8 +946,7 @@ class SecurityReportPDF:
             # 패턴 5: 들여쓰기된 * 불릿
             indented_bullet_match = re.match(indented_bullet_pattern, line_rstrip)
             if indented_bullet_match:
-                bullet_text = indented_bullet_match.group
-                (1)
+                bullet_text = indented_bullet_match.group(1)
                 indent_level = self.L5 if in_sub_context else self.L4
                 self.draw_paragraph(indent_level, f"• {bullet_text}", font_size=12, line_spacing=19)
                 continue
@@ -1073,54 +1072,6 @@ class SecurityReportPDF:
             
         self.canvas.showPage()
 
-    def render_section(self, main_num: int, section_details: List[Dict[str, Any]], 
-                       section_titles: Dict[int, str], section_names: Dict[int, str],
-                       collect_toc: bool = True, is_first_section: bool = False):
-        """✅ 정밀 측정: 섹션 렌더링"""
-        max_w = self.width - self.L2 - 45
-        
-        if not is_first_section:
-            self.new_page()
-        
-        main_title = f"{main_num}. {section_names[main_num]}"
-        if collect_toc:
-            self.toc_entries.append((main_title, self.current_page, f"section_{main_num}", True))
-        
-        self.canvas.bookmarkPage(f"section_{main_num}")
-        
-        # ✅ 대제목: 18pt 볼드, 아래 32pt 여백
-        self.check_space(30)
-        try:
-            self.canvas.setFont('MalgunBold', 18)
-        except:
-            self.canvas.setFont(self.font, 18)
-        self.canvas.setFillColor(self.black)
-        self.canvas.drawString(self.L0, self.current_y, main_title)
-        self.current_y -= 32
-        
-        # ✅ 소제목 및 내용
-        for idx, detail in enumerate(section_details, 1):
-            section_type = detail.get('section_type')
-            title = section_titles.get(section_type, "")
-            content = detail.get('content', "")
-            
-            sub_title = f"{main_num}.{idx} {title}"
-            if collect_toc:
-                self.toc_entries.append((sub_title, self.current_page, f"section_{main_num}_{idx}", False))
-            self.canvas.bookmarkPage(f"section_{main_num}_{idx}")
-            
-            # ✅ 소제목: 14pt 볼드, 아래 26pt 여백
-            self.check_space(24)
-            try:
-                self.canvas.setFont('MalgunBold', 14)
-            except:
-                self.canvas.setFont(self.font, 14)
-            self.canvas.drawString(self.L1, self.current_y, sub_title)
-            self.current_y -= 26
-            
-            self.render_markdown_content(content, self.L2)
-            self.current_y -= 22
-    
     def render_section_new(self, main_order: int, main_title: str, sections: List[Dict[str, Any]],
                        collect_toc: bool = True, is_first_section: bool = False):
         """새로운 계층 구조를 위한 섹션 렌더링"""

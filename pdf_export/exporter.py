@@ -22,6 +22,7 @@ class PDFReportExporter:
     def generate_and_upload(
         self, 
         report_data: dict, 
+        user_id: str,
         delete_local: bool = True,
         custom_filename: Optional[str] = None
     ) -> Optional[str]:
@@ -74,10 +75,10 @@ class PDFReportExporter:
             print("=" * 60)
             
             # 4. S3 업로드 (타임스탬프 없이 업로드)
-            s3_key = self.s3_manager.generate_s3_key(filename, include_timestamp=False)
             s3_url = self.s3_manager.upload_file(
                 local_path=temp_path,
-                s3_key=s3_key,
+                filename=filename,
+                user_id=user_id,
                 metadata={
                     'report-id': report_data.get('report', {}).get('id', ''),
                     'pc-id': report_data.get('report', {}).get('pc_id', ''),
