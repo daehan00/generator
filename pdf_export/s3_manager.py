@@ -5,6 +5,7 @@ S3 파일 업로드 및 관리 유틸리티
 
 import os
 import boto3
+import logging
 from datetime import datetime
 from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
@@ -21,6 +22,8 @@ class S3Manager:
             bucket_name (str, optional): S3 버킷 이름. None이면 .env에서 읽음
             region (str, optional): AWS 리전. None이면 .env에서 읽음
         """
+        self.logger = logging.getLogger(__name__)
+        
         # .env 파일 로드
         load_dotenv()
         
@@ -30,6 +33,7 @@ class S3Manager:
         self.reports_prefix = os.getenv('S3_REPORTS_PREFIX', 'reports/')
         
         if not self.bucket_name:
+            self.logger.error("S3_BUCKET_NAME이 설정되지 않았습니다. .env 파일을 확인하세요.")
             raise ValueError("S3_BUCKET_NAME이 설정되지 않았습니다. .env 파일을 확인하세요.")
         
         # S3 클라이언트 초기화
@@ -40,8 +44,9 @@ class S3Manager:
                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
                 aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
             )
-            print(f"✅ S3 클라이언트 초기화 완료: {self.bucket_name} (리전: {self.region})")
+            self.logger.info(f"✅ S3 클라이언트 초기화 완료: {self.bucket_name} (리전: {self.region})")
         except NoCredentialsError:
+            self.logger.error("AWS 자격 증명을 찾을 수 없습니다. .env 파일의 AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY를 확인하세요.")
             raise ValueError("AWS 자격 증명을 찾을 수 없습니다. .env 파일의 AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY를 확인하세요.")
     
     def upload_file(self, local_path, s3_key=None, metadata=None):
@@ -57,7 +62,7 @@ class S3Manager:
             str: 업로드된 파일의 S3 URL (성공시), None (실패시)
         """
         if not os.path.exists(local_path):
-            print(f"❌ 파일을 찾을 수 없습니다: {local_path}")
+            self.logger.error(f"파일을 찾을 수 없습니다: {local_path}")
             return None
         
         # S3 키 생성 (지정되지 않은 경우)
@@ -78,7 +83,7 @@ class S3Manager:
                 extra_args['ContentType'] = 'application/pdf'
             
             # 파일 업로드
-            print(f"📤 S3 업로드 시작: {local_path} → s3://{self.bucket_name}/{s3_key}")
+            self.logger.info(f"📤 S3 업로드 시작: {local_path} → s3://{self.bucket_name}/{s3_key}")
             self.s3_client.upload_file(
                 local_path,
                 self.bucket_name,
@@ -88,16 +93,16 @@ class S3Manager:
             
             # S3 URL 생성
             s3_url = f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{s3_key}"
-            print(f"✅ S3 업로드 완료!")
-            print(f"📍 S3 URL: {s3_url}")
+            self.logger.info("✅ S3 업로드 완료!")
+            self.logger.info(f"📍 S3 URL: {s3_url}")
             
             return s3_url
             
         except ClientError as e:
-            print(f"❌ S3 업로드 실패: {e}")
+            self.logger.error(f"S3 업로드 실패: {e}")
             return None
         except Exception as e:
-            print(f"❌ 예상치 못한 오류: {e}")
+            self.logger.error(f"예상치 못한 오류: {e}")
             return None
     
     def generate_s3_key(self, filename, include_timestamp=True):
@@ -119,6 +124,7 @@ class S3Manager:
             filename_with_timestamp = filename
         
         s3_key = f"{self.reports_prefix}{filename_with_timestamp}"
+        self.logger.debug(f"생성된 S3 키: {s3_key}")
         return s3_key
     
     def delete_local_file(self, local_path):
@@ -134,13 +140,13 @@ class S3Manager:
         try:
             if os.path.exists(local_path):
                 os.remove(local_path)
-                print(f"🗑️  로컬 파일 삭제 완료: {local_path}")
+                self.logger.info(f"🗑️  로컬 파일 삭제 완료: {local_path}")
                 return True
             else:
-                print(f"⚠️  파일이 존재하지 않음: {local_path}")
+                self.logger.warning(f"파일이 존재하지 않음: {local_path}")
                 return False
         except Exception as e:
-            print(f"❌ 파일 삭제 실패: {e}")
+            self.logger.error(f"파일 삭제 실패: {e}")
             return False
     
     def _sanitize_metadata(self, metadata):
@@ -165,7 +171,7 @@ class S3Manager:
                 if safe_key and safe_value:
                     safe_metadata[safe_key] = safe_value
                 else:
-                    print(f"⚠️  메타데이터 제외 (non-ASCII): {key}={value}")
+                    self.logger.warning(f"메타데이터 제외 (non-ASCII): {key}={value}")
         return safe_metadata
     
     def check_connection(self):
@@ -177,14 +183,14 @@ class S3Manager:
         """
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
-            print(f"✅ S3 버킷 연결 성공: {self.bucket_name}")
+            self.logger.info(f"✅ S3 버킷 연결 성공: {self.bucket_name}")
             return True
         except ClientError as e:
             error_code = e.response['Error']['Code']
             if error_code == '404':
-                print(f"❌ S3 버킷을 찾을 수 없음: {self.bucket_name}")
+                self.logger.error(f"S3 버킷을 찾을 수 없음: {self.bucket_name}")
             elif error_code == '403':
-                print(f"❌ S3 버킷 접근 권한 없음: {self.bucket_name}")
+                self.logger.error(f"S3 버킷 접근 권한 없음: {self.bucket_name}")
             else:
-                print(f"❌ S3 연결 실패: {e}")
+                self.logger.error(f"S3 연결 실패: {e}")
             return False

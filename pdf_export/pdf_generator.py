@@ -1,5 +1,5 @@
 """
-security_report_pdf_dynamic.py (원본 PDF 완벽 복제 - 정밀 측정)
+pdf_generator.py
 -------------------------------------
 """
 
@@ -15,6 +15,7 @@ from reportlab.lib.colors import HexColor
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from datetime import datetime
+import logging
 
 # ===================================================================
 # PDF 보고서 섹션 매핑 정의
@@ -32,8 +33,8 @@ SECTION_TITLES = {
     7: "유출 행위",
     8: "증거 인멸 행위",
     9: "기타 의심 행위",
-    10: "종합 의견 및 재구성",
-    11: "확인된 사실"
+    10: "확인된 사실",
+    11: "종합 의견 및 재구성"
 }
 
 # 대분류 구조 정의
@@ -146,6 +147,8 @@ class SecurityReportPDF:
         assets_dir = os.path.join(os.path.dirname(__file__), "assets")
         self.bg1 = os.path.join(assets_dir, "001.png")
         self.bg2 = os.path.join(assets_dir, "002.png")
+
+        self.logger = logging.getLogger(__name__)
 
     def _setup_fonts(self):
         try:
@@ -1188,7 +1191,7 @@ class SecurityReportPDF:
                 # 한국어 형식으로 변환 (2025년 10월 22일)
                 date_str = f"{dt.year}년 {dt.month}월 {dt.day}일"
             except Exception as e:
-                print(f"⚠️ 날짜 변환 실패: {e}, 기본값 사용")
+                self.logger.warning(f"날짜 변환 실패: {e}, 기본값 사용")
                 date_str = "2025년 10월 22일"
         else:
             date_str = "2025년 10월 22일"
@@ -1199,10 +1202,8 @@ class SecurityReportPDF:
             date=date_str
         )
 
-        print("=" * 60)
-        print("📄 보안 진단 보고서 PDF 생성 (정밀 측정 완료)")
-        print("=" * 60)
-        print(f"출력: {output_path}\n")
+        self.logger.info("📄 보안 진단 보고서 PDF 생성 (정밀 측정 완료)")
+        self.logger.info(f"출력: {output_path}")
 
         # 세부 섹션 목록 가져오기
         main_sections_list = json_data.get("details", [])
@@ -1268,11 +1269,11 @@ class SecurityReportPDF:
             first_section = False
 
         self.canvas.save()
-        print("\n✅ 완료!")
-        print(f"✅ 총 {self.current_page}페이지 생성")
-        print(f"✅ 목차 항목 {len(self.toc_entries)}개 자동 생성")
-        print("=" * 60)
+        self.logger.info("✅ 완료!")
+        self.logger.info(f"✅ 총 {self.current_page}페이지 생성")
+        self.logger.info(f"✅ 목차 항목 {len(self.toc_entries)}개 자동 생성")
 
 
 if __name__ == "__main__":
-    print("✅ 이미지 기반 정밀 측정 완료")
+    logger = logging.getLogger(__name__)
+    logger.info("✅ 이미지 기반 정밀 측정 완료")
