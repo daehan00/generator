@@ -301,7 +301,7 @@ class SecurityReportPDF:
             
             # 폰트 선택
             if is_bold:
-                font_name = 'self.font_bold'
+                font_name = self.font_bold
             else:
                 font_name = self.font
             
@@ -435,10 +435,10 @@ class SecurityReportPDF:
             # 폰트 선택
             if segment['bold']:
                 try:
-                    self.canvas.setFont('self.font_bold', font_size)
+                    self.canvas.setFont(self.font_bold, font_size)
                 except:
                     self.canvas.setFont(self.font, font_size)
-                font_name = 'self.font_bold'
+                font_name = self.font_bold
             elif segment.get('code', False):
                 # 백틱은 일반 폰트로 표시 (백틱 포함)
                 self.canvas.setFont(self.font, font_size)
@@ -474,7 +474,7 @@ class SecurityReportPDF:
             for line in lines:
                 self.check_space(line_spacing + 5)
                 try:
-                    self.canvas.setFont('self.font_bold', font_size)
+                    self.canvas.setFont(self.font_bold, font_size)
                 except:
                     self.canvas.setFont(self.font, font_size)
                 self.canvas.drawString(x, self.current_y, line)
@@ -527,8 +527,8 @@ class SecurityReportPDF:
                         
                     elif segment['bold']:
                         try:
-                            self.canvas.setFont('self.font_bold', font_size)
-                            font_name = 'self.font_bold'
+                            self.canvas.setFont(self.font_bold, font_size)
+                            font_name = self.font_bold
                         except:
                             self.canvas.setFont(self.font, font_size)
                             font_name = self.font
@@ -579,7 +579,7 @@ class SecurityReportPDF:
 
         # 헤더는 항상 볼드체
         try:
-            self.canvas.setFont('self.font_bold', font_size)
+            self.canvas.setFont(self.font_bold, font_size)
         except:
             self.canvas.setFont(self.font, font_size)
 
@@ -614,7 +614,7 @@ class SecurityReportPDF:
             h_clean = h.replace('**', '')
             if '**' in h:
                 try:
-                    self.canvas.setFont('self.font_bold', 10)
+                    self.canvas.setFont(self.font_bold, 10)
                 except:
                     self.canvas.setFont(self.font, 10)
             else:
@@ -737,8 +737,8 @@ class SecurityReportPDF:
                     # 폰트 설정
                     if has_bold:
                         try:
-                            self.canvas.setFont('self.font_bold', 10)
-                            font_name = 'self.font_bold'
+                            self.canvas.setFont(self.font_bold, 10)
+                            font_name = self.font_bold
                         except:
                             self.canvas.setFont(self.font, 10)
                             font_name = self.font
@@ -935,7 +935,7 @@ class SecurityReportPDF:
                 self.check_space(20)
 
                 try:
-                    self.canvas.setFont('self.font_bold', 12)
+                    self.canvas.setFont(self.font_bold, 12)
                 except:
                     self.canvas.setFont(self.font, 12)
                 self.canvas.setFillColor(self.black)
@@ -956,7 +956,7 @@ class SecurityReportPDF:
                     clean_text = text.strip()[2:-2]
                     self.check_space(22)
                     try:
-                        self.canvas.setFont('self.font_bold', 12)
+                        self.canvas.setFont(self.font_bold, 12)
                     except:
                         self.canvas.setFont(self.font, 12)
                     self.canvas.setFillColor(self.black)
@@ -1025,7 +1025,7 @@ class SecurityReportPDF:
         c.drawString(60, 680, data.company_name)
 
         try:
-            c.setFont('self.font_bold', 44)
+            c.setFont(self.font_bold, 44)
         except:
             c.setFont(self.font, 44)
         c.setFillColor(self.blue)
@@ -1052,13 +1052,13 @@ class SecurityReportPDF:
         
         # 목차 제목
         try:
-            self.canvas.setFont('self.font_bold', 26)
+            self.canvas.setFont(self.font_bold, 26)
         except:
             self.canvas.setFont(self.font, 26)
         self.canvas.setFillColor(self.black)
         title_text = "목차"
         registered_fonts = pdfmetrics.getRegisteredFontNames()
-        font_name = 'self.font_bold' if 'self.font_bold' in registered_fonts else self.font
+        font_name = self.font_bold if self.font_bold in registered_fonts else self.font
         text_width = self.canvas.stringWidth(title_text, font_name, 26)
         self.canvas.drawString((self.width - text_width) / 2, 750, title_text)
         
@@ -1073,7 +1073,7 @@ class SecurityReportPDF:
                 
                 # 대제목: 18pt 볼드
                 try:
-                    self.canvas.setFont('self.font_bold', 18)
+                    self.canvas.setFont(self.font_bold, 18)
                 except:
                     self.canvas.setFont(self.font, 18)
                 self.canvas.setFillColor(self.black)
@@ -1083,7 +1083,7 @@ class SecurityReportPDF:
                 
                 # 링크 영역 (제목 클릭 시 해당 섹션으로 이동)
                 try:
-                    title_width = self.canvas.stringWidth(title, 'self.font_bold', 18)
+                    title_width = self.canvas.stringWidth(title, self.font_bold, 18)
                 except:
                     title_width = self.canvas.stringWidth(title, self.font, 18)
                 
@@ -1131,7 +1131,7 @@ class SecurityReportPDF:
         # 대제목: 18pt 볼드, 아래 32pt 여백
         self.check_space(30)
         try:
-            self.canvas.setFont('self.font_bold', 18)
+            self.canvas.setFont(self.font_bold, 18)
         except:
             self.canvas.setFont(self.font, 18)
         self.canvas.setFillColor(self.black)
@@ -1152,7 +1152,7 @@ class SecurityReportPDF:
             # 소제목: 14pt 볼드, 아래 26pt 여백
             self.check_space(24)
             try:
-                self.canvas.setFont('self.font_bold', 14)
+                self.canvas.setFont(self.font_bold, 14)
             except:
                 self.canvas.setFont(self.font, 14)
             self.canvas.drawString(self.L1, self.current_y, sub_title)
