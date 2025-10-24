@@ -222,7 +222,9 @@ class Generator:
             
             if isinstance(msg, (HumanMessage, SystemMessage, AIMessage)):
                 content = msg.content
-                if isinstance(content, str) and len(content) > 200:
+                if isinstance(content, list):
+                    print("\n".join(content)) #type: ignore
+                elif isinstance(content, str) and len(content) > 200:
                     print(f"{content}")
                 else:
                     print(f"{content}")

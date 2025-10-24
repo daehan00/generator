@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END
@@ -15,7 +15,7 @@ from workflow.database import save_data_node
 from workflow.requirements_node import analyze_requirements_node
 from workflow.tools import agent_tools, ToolContext, get_metadata_info, format_metadata_section
 from workflow.prompts import AGENT_SYSTEM_PROMPT, SCENARIO_GENERATOR_SYSTEM_PROMPT, CLASSIFY_PROMPT
-from workflow.utils import llm_large, llm_small
+from workflow.utils import llm_large, llm_medium
 
 # --------------------------------------------------------------------------
 # LLM 및 도구 설정
@@ -313,27 +313,32 @@ def router(state: AgentState) -> str:
         return "tools"
     
     # AIMessage의 content를 보고 최종 보고서 생성 여부 판단
-    content = getattr(last_message, "content", "") or ""
+    content = getattr(last_message, "content", "")
     if not content:
         return "continue"
 
-    prompt_text = (
-        "아래 ai message를 보고 최종 보고서 생성이 완료되었는지 True or False로 판단하세요.\n"
-        "[ai_message]\n"
-        f"{content}\n\n"
-        "응답은 반드시 True 또는 False만 반환하세요."
-    )
-
-    structured_llm = llm_small.with_structured_output(bool)
-    result = structured_llm.invoke([HumanMessage(content=prompt_text)])
-
-    if check_is_done(result):
+    if check_is_done(content):
         return "generate_scenario"
     
     # 기본적으로 계속 생각
     return "continue"
 
-def check_is_done(result: bool | dict | Any) -> bool:
+def check_is_done(content: str | List) -> bool:
+    print(f"{__name__} - last message content:", content[:200])
+    
+    if isinstance(content, list):
+        content = "\n\n".join(content)
+
+    prompt_text = (
+        "아래 ai_message는 ai agent가 생성한 텍스트입니다. 보고서 생성 완료 여부를 True or False로 판단하세요.\n"
+        "[ai_message]\n"
+        f"{content}\n\n"
+        "응답은 반드시 True 또는 False만 반환하세요."
+    )
+
+    structured_llm = llm_medium.with_structured_output(bool)
+    result = structured_llm.invoke([HumanMessage(content=prompt_text)])
+
     is_done = False
     if isinstance(result, bool):
         is_done = result
@@ -345,6 +350,7 @@ def check_is_done(result: bool | dict | Any) -> bool:
             is_done = str(result).strip().lower() in ("true", "yes", "1")
     else:
         is_done = str(result).strip().lower() in ("true", "yes", "1")
+    print(f"{__name__} - result: {is_done}")
     return is_done
 
 # --------------------------------------------------------------------------
