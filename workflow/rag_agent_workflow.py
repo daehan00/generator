@@ -300,7 +300,7 @@ def router(state: AgentState) -> str:
     
     # 무한 루프 방지: 최대 반복 횟수 체크
     ai_messages = [m for m in messages if isinstance(m, AIMessage)]
-    max_iterations = 50
+    max_iterations = 20
     if len(ai_messages) >= max_iterations:
         print(f"  ⚠️  최대 반복 횟수({max_iterations}) 도달 - 보고서 생성")
         return "generate_scenario"

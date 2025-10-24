@@ -5,7 +5,8 @@ PDF Report Exporter
 
 import os
 import tempfile
-from typing import Optional  # ✅ 이 줄 추가
+import logging
+from typing import Optional
 from pdf_export.pdf_generator import SecurityReportPDF
 from pdf_export.s3_manager import S3Manager
 
@@ -18,6 +19,7 @@ class PDFReportExporter:
         """PDFReportExporter 초기화"""
         self.pdf_generator = SecurityReportPDF()
         self.s3_manager = S3Manager()
+        self.logger = logging.getLogger(__name__)
     
     def generate_and_upload(
         self, 
@@ -59,9 +61,7 @@ class PDFReportExporter:
         temp_path = os.path.join(temp_dir, filename)
         
         try:
-            print("=" * 60)
-            print("📄 보고서 PDF 생성 시작...")
-            print("=" * 60)
+            self.logger.info("📄 보고서 PDF 생성 시작...")
             
             # 3. PDF 생성
             self.pdf_generator.generate_from_json(
@@ -69,10 +69,7 @@ class PDFReportExporter:
                 output_path=temp_path
             )
             
-            print()
-            print("=" * 60)
-            print("📤 S3 업로드 시작...")
-            print("=" * 60)
+            self.logger.info("📤 S3 업로드 시작...")
             
             # 4. S3 업로드 (타임스탬프 없이 업로드)
             s3_url = self.s3_manager.upload_file(
@@ -87,24 +84,15 @@ class PDFReportExporter:
             )
             
             if s3_url:
-                print()
-                print("=" * 60)
-                print("✅ 보고서 PDF 생성 및 업로드 완료!")
-                print(f"🌐 접근 URL: {s3_url}")
-                print("=" * 60)
+                self.logger.info("✅ 보고서 PDF 생성 및 업로드 완료!")
+                self.logger.info(f"🌐 접근 URL: {s3_url}")
             else:
-                print()
-                print("=" * 60)
-                print("❌ S3 업로드 실패")
-                print("=" * 60)
+                self.logger.error("❌ S3 업로드 실패")
             
             return s3_url
             
         except Exception as e:
-            print()
-            print("=" * 60)
-            print(f"❌ PDF 생성 중 오류 발생: {e}")
-            print("=" * 60)
+            self.logger.error(f"❌ PDF 생성 중 오류 발생: {e}")
             return None
             
         finally:
@@ -134,5 +122,5 @@ class PDFReportExporter:
             )
             return True
         except Exception as e:
-            print(f"❌ PDF 생성 실패: {e}")
+            self.logger.error(f"❌ PDF 생성 실패: {e}")
             return False
