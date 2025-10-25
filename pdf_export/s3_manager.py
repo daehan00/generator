@@ -49,13 +49,12 @@ class S3Manager:
             self.logger.error("AWS 자격 증명을 찾을 수 없습니다. .env 파일의 AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY를 확인하세요.")
             raise ValueError("AWS 자격 증명을 찾을 수 없습니다. .env 파일의 AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY를 확인하세요.")
     
-    def upload_file(self, local_path, s3_key=None, metadata=None):
+    def upload_file(self, local_path, filename, user_id, metadata=None):
         """
         파일을 S3에 업로드
         
         Args:
             local_path (str): 업로드할 로컬 파일 경로
-            s3_key (str, optional): S3에 저장될 키(경로). None이면 자동 생성
             metadata (dict, optional): 파일 메타데이터
         
         Returns:
@@ -66,9 +65,8 @@ class S3Manager:
             return None
         
         # S3 키 생성 (지정되지 않은 경우)
-        if s3_key is None:
-            filename = os.path.basename(local_path)
-            s3_key = self.generate_s3_key(filename)
+
+        s3_key = self._generate_s3_key(filename, user_id, include_timestamp=False)
         
         try:
             # 메타데이터 설정 (ASCII만 허용)
@@ -105,7 +103,7 @@ class S3Manager:
             self.logger.error(f"예상치 못한 오류: {e}")
             return None
     
-    def generate_s3_key(self, filename, include_timestamp=True):
+    def _generate_s3_key(self, filename, user_id, include_timestamp=True):
         """
         S3 키(경로) 자동 생성
         
@@ -123,7 +121,7 @@ class S3Manager:
         else:
             filename_with_timestamp = filename
         
-        s3_key = f"{self.reports_prefix}{filename_with_timestamp}"
+        s3_key = f"{self.reports_prefix}{user_id}/{filename_with_timestamp}"
         self.logger.debug(f"생성된 S3 키: {s3_key}")
         return s3_key
     

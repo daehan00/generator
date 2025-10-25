@@ -1,8 +1,9 @@
-from typing import Dict
+from typing import Any, Dict, List
 
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
+
 
 # 🆕 V2: workflow_v2의 필터링 로직 및 클래스 import
 from workflow.filter_node import (
@@ -14,7 +15,7 @@ from workflow.database import save_data_node
 from workflow.requirements_node import analyze_requirements_node
 from workflow.tools import agent_tools, ToolContext, get_metadata_info, format_metadata_section
 from workflow.prompts import AGENT_SYSTEM_PROMPT, SCENARIO_GENERATOR_SYSTEM_PROMPT, CLASSIFY_PROMPT
-from workflow.utils import llm_large
+from workflow.utils import llm_large, llm_medium
 
 # --------------------------------------------------------------------------
 # LLM 및 도구 설정
@@ -299,7 +300,7 @@ def router(state: AgentState) -> str:
     
     # 무한 루프 방지: 최대 반복 횟수 체크
     ai_messages = [m for m in messages if isinstance(m, AIMessage)]
-    max_iterations = 30
+    max_iterations = 20
     if len(ai_messages) >= max_iterations:
         print(f"  ⚠️  최대 반복 횟수({max_iterations}) 도달 - 보고서 생성")
         return "generate_scenario"
@@ -312,13 +313,45 @@ def router(state: AgentState) -> str:
         return "tools"
     
     # AIMessage의 content를 보고 최종 보고서 생성 여부 판단
-    # "최종 보고서", "보고서 생성" 등의 키워드가 있으면 시나리오 생성
-    content = getattr(last_message, 'content', '')
-    if content and any(keyword in content for keyword in ["충분한 정보를 수집했습니다."]):
+    content = getattr(last_message, "content", "")
+    if not content:
+        return "continue"
+
+    if check_is_done(content):
         return "generate_scenario"
     
     # 기본적으로 계속 생각
     return "continue"
+
+def check_is_done(content: str | List) -> bool:
+    print(f"{__name__} - last message content:", content[:200])
+    
+    if isinstance(content, list):
+        content = "\n\n".join(content)
+
+    prompt_text = (
+        "아래 ai_message는 ai agent가 생성한 텍스트입니다. 보고서 생성 완료 여부를 True or False로 판단하세요.\n"
+        "[ai_message]\n"
+        f"{content}\n\n"
+        "응답은 반드시 True 또는 False만 반환하세요."
+    )
+
+    structured_llm = llm_medium.with_structured_output(bool)
+    result = structured_llm.invoke([HumanMessage(content=prompt_text)])
+
+    is_done = False
+    if isinstance(result, bool):
+        is_done = result
+    elif isinstance(result, dict):
+        bool_vals = [v for v in result.values() if isinstance(v, bool)]
+        if bool_vals:
+            is_done = bool_vals[0]
+        else:
+            is_done = str(result).strip().lower() in ("true", "yes", "1")
+    else:
+        is_done = str(result).strip().lower() in ("true", "yes", "1")
+    print(f"{__name__} - result: {is_done}")
+    return is_done
 
 # --------------------------------------------------------------------------
 # 그래프 구성 및 컴파일

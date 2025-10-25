@@ -286,7 +286,7 @@ def save_to_chroma(
         
         # ChromaDB 배치 저장
         if config.db_type == "chroma":
-            BATCH_SIZE = 5000
+            BATCH_SIZE = 500
             total_docs = len(documents)
             
             if total_docs <= BATCH_SIZE:

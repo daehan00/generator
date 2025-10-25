@@ -53,15 +53,16 @@ class Generator:
         
         # 6. 보고서 pdf 처리
         self.logger.debug("Starting PDF generation")
-        self._generate_pdf_report(report_saved)
+        self._generate_pdf_report(report_saved, user_id)
         self.logger.info("Report generation completed successfully")
 
     def _generate_scenarios(self, artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> None:
         # 1. llm service를 호출해서 시나리오 생성
         self.logger.debug(f"Invoking LLM service to generate scenarios for task_id: {task_id}")
-        result, context = invoke_scenarios(artifacts, task_id, job_id, job_info)
+        result, context, messages = invoke_scenarios(artifacts, task_id, job_id, job_info)
         self.scenario = result
         self.context = context
+        self.result_messages = messages
         self.logger.info(f"Scenarios generated successfully for task_id: {task_id}")
 
     def _generate_report_details(self, job_info: dict, task_id: str):
@@ -99,7 +100,7 @@ class Generator:
         
         self.logger.info(f"Report details generation completed. Total sections: {len(self.report.details)}")
 
-    def _generate_pdf_report(self, data: dict[str, Any]):
+    def _generate_pdf_report(self, data: dict[str, Any], user_id: str):
         try:
             self.logger.info("📄 보고서 PDF 변환 프로세스 시작")
             # 🔍 입력 데이터 확인
@@ -144,8 +145,9 @@ class Generator:
             self.logger.debug("PDF 생성 및 S3 업로드 시작...")
             pdf_url = exporter.generate_and_upload(
                 report_data=transformed_data,
-                delete_local=False,
-                custom_filename=custom_filename
+                delete_local=True,
+                custom_filename=custom_filename,
+                user_id = user_id
             )
             
             if pdf_url:
@@ -184,5 +186,66 @@ class Generator:
         report_response = backend_client.save_report(report_create_data, user_id, job_id)
 
         self.logger.debug("Generating PDF report for test")
-        self._generate_pdf_report(report_response)
+        self._generate_pdf_report(report_response, user_id)
         self.logger.info("PDF 생성 테스트 완료")
+
+    def test_messages_print(self) -> None:
+        if not self.result_messages:
+            print("There is no messages")
+            return
+        
+        import json
+        from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
+        
+        messages = self.result_messages
+        
+        message_types = {}
+        for msg in messages:
+            msg_type = type(msg).__name__
+            message_types[msg_type] = message_types.get(msg_type, 0) + 1
+
+        for msg_type, count in message_types.items():
+            print(f"  {msg_type}: {count}개")
+
+        print(f"\n  전체 메시지 수: {len(messages)}개\n")
+
+        # 2. 메시지 프린트
+        print("=" * 60)
+        print("💬 메시지 상세 내역")
+        print("=" * 60)
+
+        for idx, msg in enumerate(messages, 1):
+            msg_type = type(msg).__name__
+            
+            print(f"\n[{idx}] {msg_type}")
+            print("-" * 60)
+            
+            if isinstance(msg, (HumanMessage, SystemMessage, AIMessage)):
+                content = msg.content
+                if isinstance(content, list):
+                    print("\n".join(content)) #type: ignore
+                elif isinstance(content, str) and len(content) > 200:
+                    print(f"{content}")
+                else:
+                    print(f"{content}")
+            
+            if isinstance(msg, ToolMessage):
+                print(f"Tool: {msg.name if hasattr(msg, 'name') else 'N/A'}")
+                content = msg.content
+                try:
+                    # JSON 문자열인 경우 파싱하여 예쁘게 출력
+                    parsed = json.loads(content) # type: ignore
+                    print(json.dumps(parsed, indent=2, ensure_ascii=False))
+                except (json.JSONDecodeError, TypeError):
+                    # JSON이 아니면 원본 그대로 출력
+                    if isinstance(content, str) and len(content) > 200:
+                        print(f"{content}")
+                    else:
+                        print(f"{content}")
+            
+            if isinstance(msg, AIMessage) and hasattr(msg, 'tool_calls') and msg.tool_calls:
+                print(f"도구 호출: {len(msg.tool_calls)}개")
+                for tool_call in msg.tool_calls:
+                    print(f"  - {tool_call.get('name', 'N/A')}")
+
+        print("\n" + "=" * 60)

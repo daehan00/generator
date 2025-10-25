@@ -4,7 +4,7 @@ from common.models import SectionTypeEnum, ReportBase, ReportDetailBase, ReportD
 from workflow.rag_agent_workflow import app, AgentState
 from workflow.classes import create_initial_state
 
-def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCreate, str]:
+def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCreate, str, List]:
     initial_state = create_initial_state(
         job_id=job_id,
         task_id=task_id,
@@ -19,7 +19,7 @@ def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCrea
 
     initial_state = cast(AgentState, initial_state)
     final_state = app.invoke(initial_state, config={"recursion_limit": 80})
-    return final_state["final_report"], final_state["context"]
+    return final_state["final_report"], final_state["context"], final_state["messages"]
 
 def invoke_scenarios_test(artifacts, task_id: str, job_id: str, job_info: dict[str, Any]) -> tuple[ScenarioCreate, str]:
     print(f"Count of artifacts: {len(artifacts)}")

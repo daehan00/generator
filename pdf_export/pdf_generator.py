@@ -116,9 +116,15 @@ class ReportData:
 
 class SecurityReportPDF:
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.width, self.height = A4
         self.font = self._setup_fonts()
-        self.canvas = None
+        self.canvas = canvas.Canvas("")
+
+        if self.font == "NanumBarunGothic":
+            self.font_bold = "NanumBarunGothicBold"
+        else:
+            self.font_bold = "HYSMyeongJo-Medium"  # CJK 폴백
 
         # ✅ 정밀 측정: 왼쪽 여백 40pt
         self.left = 40
@@ -148,20 +154,55 @@ class SecurityReportPDF:
         self.bg1 = os.path.join(assets_dir, "001.png")
         self.bg2 = os.path.join(assets_dir, "002.png")
 
-        self.logger = logging.getLogger(__name__)
+        
 
     def _setup_fonts(self):
+        """
+        한글 폰트 설정
+        1순위: assets/fonts/ (프로젝트 내장)
+        2순위: 시스템 폰트 (/usr/share/fonts/)
+        3순위: ReportLab 내장 CJK 폰트
+        """
         try:
-            m = "C:\\Windows\\Fonts\\malgun.ttf"
-            mb = "C:\\Windows\\Fonts\\malgunbd.ttf"
-            if os.path.exists(m):
-                pdfmetrics.registerFont(TTFont("Malgun", m))
-                if os.path.exists(mb):
-                    pdfmetrics.registerFont(TTFont("MalgunBold", mb))
-                return "Malgun"
-        except:
-            pass
-        return "Helvetica"
+            from reportlab.pdfbase.ttfonts import TTFont
+            
+            # 1순위: assets 폴더
+            assets_dir = os.path.join(os.path.dirname(__file__), "assets", "fonts")
+            regular_path = os.path.join(assets_dir, "NanumBarunGothic.ttf")
+            bold_path = os.path.join(assets_dir, "NanumBarunGothicBold.ttf")
+            
+            if os.path.exists(regular_path) and os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont("NanumBarunGothic", regular_path))
+                pdfmetrics.registerFont(TTFont("NanumBarunGothicBold", bold_path))
+                self.logger.info("✅ 나눔바른고딕 로드 (assets)")
+                return "NanumBarunGothic"
+            
+            # 2순위: 시스템 폰트
+            system_regular = "/usr/share/fonts/truetype/nanum/NanumBarunGothic.ttf"
+            system_bold = "/usr/share/fonts/truetype/nanum/NanumBarunGothicBold.ttf"
+            
+            if os.path.exists(system_regular) and os.path.exists(system_bold):
+                pdfmetrics.registerFont(TTFont("NanumBarunGothic", system_regular))
+                pdfmetrics.registerFont(TTFont("NanumBarunGothicBold", system_bold))
+                self.logger.info("✅ 나눔바른고딕 로드 (시스템)")
+                return "NanumBarunGothic"
+                
+        except Exception as e:
+            self.logger.debug(f"나눔바른고딕 로드 실패: {e}")
+        
+        # 3순위: CJK 폰트 폴백
+        try:
+            from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+            
+            pdfmetrics.registerFont(UnicodeCIDFont('HYGothic-Medium'))
+            pdfmetrics.registerFont(UnicodeCIDFont('HYSMyeongJo-Medium'))
+            
+            self.logger.info("✅ CJK 폰트 로드 (Bold는 명조체로 대체)")
+            return 'HYGothic-Medium'
+            
+        except Exception as e:
+            self.logger.error(f"❌ 한글 폰트 로드 실패: {e}")
+            return 'Helvetica'
 
     def _wrap_text(self, text: str, max_width: int, font_size: int):
         if not text or not text.strip():
@@ -260,7 +301,7 @@ class SecurityReportPDF:
             
             # 폰트 선택
             if is_bold:
-                font_name = 'MalgunBold'
+                font_name = self.font_bold
             else:
                 font_name = self.font
             
@@ -394,10 +435,10 @@ class SecurityReportPDF:
             # 폰트 선택
             if segment['bold']:
                 try:
-                    self.canvas.setFont('MalgunBold', font_size)
+                    self.canvas.setFont(self.font_bold, font_size)
                 except:
                     self.canvas.setFont(self.font, font_size)
-                font_name = 'MalgunBold'
+                font_name = self.font_bold
             elif segment.get('code', False):
                 # 백틱은 일반 폰트로 표시 (백틱 포함)
                 self.canvas.setFont(self.font, font_size)
@@ -433,7 +474,7 @@ class SecurityReportPDF:
             for line in lines:
                 self.check_space(line_spacing + 5)
                 try:
-                    self.canvas.setFont('MalgunBold', font_size)
+                    self.canvas.setFont(self.font_bold, font_size)
                 except:
                     self.canvas.setFont(self.font, font_size)
                 self.canvas.drawString(x, self.current_y, line)
@@ -486,8 +527,8 @@ class SecurityReportPDF:
                         
                     elif segment['bold']:
                         try:
-                            self.canvas.setFont('MalgunBold', font_size)
-                            font_name = 'MalgunBold'
+                            self.canvas.setFont(self.font_bold, font_size)
+                            font_name = self.font_bold
                         except:
                             self.canvas.setFont(self.font, font_size)
                             font_name = self.font
@@ -538,7 +579,7 @@ class SecurityReportPDF:
 
         # 헤더는 항상 볼드체
         try:
-            self.canvas.setFont('MalgunBold', font_size)
+            self.canvas.setFont(self.font_bold, font_size)
         except:
             self.canvas.setFont(self.font, font_size)
 
@@ -573,7 +614,7 @@ class SecurityReportPDF:
             h_clean = h.replace('**', '')
             if '**' in h:
                 try:
-                    self.canvas.setFont('MalgunBold', 10)
+                    self.canvas.setFont(self.font_bold, 10)
                 except:
                     self.canvas.setFont(self.font, 10)
             else:
@@ -696,8 +737,8 @@ class SecurityReportPDF:
                     # 폰트 설정
                     if has_bold:
                         try:
-                            self.canvas.setFont('MalgunBold', 10)
-                            font_name = 'MalgunBold'
+                            self.canvas.setFont(self.font_bold, 10)
+                            font_name = self.font_bold
                         except:
                             self.canvas.setFont(self.font, 10)
                             font_name = self.font
@@ -894,7 +935,7 @@ class SecurityReportPDF:
                 self.check_space(20)
 
                 try:
-                    self.canvas.setFont('MalgunBold', 12)
+                    self.canvas.setFont(self.font_bold, 12)
                 except:
                     self.canvas.setFont(self.font, 12)
                 self.canvas.setFillColor(self.black)
@@ -915,7 +956,7 @@ class SecurityReportPDF:
                     clean_text = text.strip()[2:-2]
                     self.check_space(22)
                     try:
-                        self.canvas.setFont('MalgunBold', 12)
+                        self.canvas.setFont(self.font_bold, 12)
                     except:
                         self.canvas.setFont(self.font, 12)
                     self.canvas.setFillColor(self.black)
@@ -946,8 +987,7 @@ class SecurityReportPDF:
             # 패턴 5: 들여쓰기된 * 불릿
             indented_bullet_match = re.match(indented_bullet_pattern, line_rstrip)
             if indented_bullet_match:
-                bullet_text = indented_bullet_match.group
-                (1)
+                bullet_text = indented_bullet_match.group(1)
                 indent_level = self.L5 if in_sub_context else self.L4
                 self.draw_paragraph(indent_level, f"• {bullet_text}", font_size=12, line_spacing=19)
                 continue
@@ -985,7 +1025,7 @@ class SecurityReportPDF:
         c.drawString(60, 680, data.company_name)
 
         try:
-            c.setFont('MalgunBold', 44)
+            c.setFont(self.font_bold, 44)
         except:
             c.setFont(self.font, 44)
         c.setFillColor(self.blue)
@@ -1012,13 +1052,13 @@ class SecurityReportPDF:
         
         # 목차 제목
         try:
-            self.canvas.setFont('MalgunBold', 26)
+            self.canvas.setFont(self.font_bold, 26)
         except:
             self.canvas.setFont(self.font, 26)
         self.canvas.setFillColor(self.black)
         title_text = "목차"
         registered_fonts = pdfmetrics.getRegisteredFontNames()
-        font_name = 'MalgunBold' if 'MalgunBold' in registered_fonts else self.font
+        font_name = self.font_bold if self.font_bold in registered_fonts else self.font
         text_width = self.canvas.stringWidth(title_text, font_name, 26)
         self.canvas.drawString((self.width - text_width) / 2, 750, title_text)
         
@@ -1033,7 +1073,7 @@ class SecurityReportPDF:
                 
                 # 대제목: 18pt 볼드
                 try:
-                    self.canvas.setFont('MalgunBold', 18)
+                    self.canvas.setFont(self.font_bold, 18)
                 except:
                     self.canvas.setFont(self.font, 18)
                 self.canvas.setFillColor(self.black)
@@ -1043,7 +1083,7 @@ class SecurityReportPDF:
                 
                 # 링크 영역 (제목 클릭 시 해당 섹션으로 이동)
                 try:
-                    title_width = self.canvas.stringWidth(title, 'MalgunBold', 18)
+                    title_width = self.canvas.stringWidth(title, self.font_bold, 18)
                 except:
                     title_width = self.canvas.stringWidth(title, self.font, 18)
                 
@@ -1073,54 +1113,6 @@ class SecurityReportPDF:
             
         self.canvas.showPage()
 
-    def render_section(self, main_num: int, section_details: List[Dict[str, Any]], 
-                       section_titles: Dict[int, str], section_names: Dict[int, str],
-                       collect_toc: bool = True, is_first_section: bool = False):
-        """✅ 정밀 측정: 섹션 렌더링"""
-        max_w = self.width - self.L2 - 45
-        
-        if not is_first_section:
-            self.new_page()
-        
-        main_title = f"{main_num}. {section_names[main_num]}"
-        if collect_toc:
-            self.toc_entries.append((main_title, self.current_page, f"section_{main_num}", True))
-        
-        self.canvas.bookmarkPage(f"section_{main_num}")
-        
-        # ✅ 대제목: 18pt 볼드, 아래 32pt 여백
-        self.check_space(30)
-        try:
-            self.canvas.setFont('MalgunBold', 18)
-        except:
-            self.canvas.setFont(self.font, 18)
-        self.canvas.setFillColor(self.black)
-        self.canvas.drawString(self.L0, self.current_y, main_title)
-        self.current_y -= 32
-        
-        # ✅ 소제목 및 내용
-        for idx, detail in enumerate(section_details, 1):
-            section_type = detail.get('section_type')
-            title = section_titles.get(section_type, "")
-            content = detail.get('content', "")
-            
-            sub_title = f"{main_num}.{idx} {title}"
-            if collect_toc:
-                self.toc_entries.append((sub_title, self.current_page, f"section_{main_num}_{idx}", False))
-            self.canvas.bookmarkPage(f"section_{main_num}_{idx}")
-            
-            # ✅ 소제목: 14pt 볼드, 아래 26pt 여백
-            self.check_space(24)
-            try:
-                self.canvas.setFont('MalgunBold', 14)
-            except:
-                self.canvas.setFont(self.font, 14)
-            self.canvas.drawString(self.L1, self.current_y, sub_title)
-            self.current_y -= 26
-            
-            self.render_markdown_content(content, self.L2)
-            self.current_y -= 22
-    
     def render_section_new(self, main_order: int, main_title: str, sections: List[Dict[str, Any]],
                        collect_toc: bool = True, is_first_section: bool = False):
         """새로운 계층 구조를 위한 섹션 렌더링"""
@@ -1139,7 +1131,7 @@ class SecurityReportPDF:
         # 대제목: 18pt 볼드, 아래 32pt 여백
         self.check_space(30)
         try:
-            self.canvas.setFont('MalgunBold', 18)
+            self.canvas.setFont(self.font_bold, 18)
         except:
             self.canvas.setFont(self.font, 18)
         self.canvas.setFillColor(self.black)
@@ -1160,7 +1152,7 @@ class SecurityReportPDF:
             # 소제목: 14pt 볼드, 아래 26pt 여백
             self.check_space(24)
             try:
-                self.canvas.setFont('MalgunBold', 14)
+                self.canvas.setFont(self.font_bold, 14)
             except:
                 self.canvas.setFont(self.font, 14)
             self.canvas.drawString(self.L1, self.current_y, sub_title)
