@@ -1,4 +1,6 @@
 from typing import Any, List
+import os
+import tempfile
 from common.test_backendclient import TestBackendClient as BackendClient
 from common.agent import invoke_report_details_test, invoke_scenarios_test
 from common.agent import invoke_scenarios
@@ -143,19 +145,37 @@ class Generator:
             
             # PDF 생성 및 S3 업로드
             self.logger.debug("PDF 생성 및 S3 업로드 시작...")
-            pdf_url = exporter.generate_and_upload(
+            
+            # 🔕 S3 업로드 비활성화 - 주석 해제하면 다시 활성화됩니다
+            # pdf_url = exporter.generate_and_upload(
+            #     report_data=transformed_data,
+            #     delete_local=True,
+            #     custom_filename=custom_filename,
+            #     user_id = user_id
+            # )
+            # 
+            # if pdf_url:
+            #     self.logger.info(" 보로드 완료!")
+            #     self.logger.info(f" PDF URL: {pdf_url}")
+            #     return pdf_url
+            # else:
+            #     self.logger.error("❌ PDF 생성 또는 업로드 실패")
+            #     return None
+            
+            # PDF만 생성 (S3 업로드 없이)
+            output_path = os.path.join(tempfile.gettempdir(), custom_filename)
+            self.logger.debug(f"PDF 생성 중: {output_path}")
+            success = exporter.generate_pdf_only(
                 report_data=transformed_data,
-                delete_local=True,
-                custom_filename=custom_filename,
-                user_id = user_id
+                output_path=output_path
             )
             
-            if pdf_url:
-                self.logger.info(" 보고서 PDF 처리 완료!")
-                self.logger.info(f" PDF URL: {pdf_url}")
-                return pdf_url
+            if success:
+                self.logger.info("✅ PDF 생성 완료 (S3 업로드 비활성화)")
+                self.logger.info(f"📁 파일 위치: {output_path}")
+                return None
             else:
-                self.logger.error("❌ PDF 생성 또는 업로드 실패")
+                self.logger.error("❌ PDF 생성 실패")
                 return None
                 
         except ImportError as e:
