@@ -162,3 +162,7 @@ def create_initial_state(**kwargs) -> dict:
         raise ValueError(f"허용되지 않은 키 입력: {not_allowed_keys}")
     
     return dict(kwargs)
+
+
+class BooleanResponse(BaseModel):
+    is_done: bool
