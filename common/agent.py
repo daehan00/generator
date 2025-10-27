@@ -3,6 +3,7 @@ from typing import Any, List, cast
 from common.models import SectionTypeEnum, ReportBase, ReportDetailBase, ReportDetailCreate, ReportCreate, ScenarioCreate, ScenarioStepCreate
 from workflow.rag_agent_workflow import app, AgentState
 from workflow.classes import create_initial_state
+from workflow.prompts import RAW_REQUIREMENTS
 
 def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCreate, str, List]:
     initial_state = create_initial_state(
@@ -14,7 +15,7 @@ def invoke_scenarios(artifacts, task_id, job_id, job_info) -> tuple[ScenarioCrea
         filter_iteration=0,
         target_artifact_count=100_000,
         current_strictness="very_strict",
-        raw_user_requirements="일반적인 정보유출과 관련된 증거를 찾아 분석해주세요."
+        raw_user_requirements=RAW_REQUIREMENTS
     )
 
     initial_state = cast(AgentState, initial_state)
