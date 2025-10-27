@@ -10,7 +10,7 @@ from workflow.filter_node import (
     recursive_filter_node,
     should_continue_filtering
 )
-from workflow.classes import AgentState, ScenarioCreate
+from workflow.classes import AgentState, ScenarioCreate, BooleanResponse
 from workflow.database import save_data_node
 from workflow.requirements_node import analyze_requirements_node
 from workflow.tools import agent_tools, ToolContext, get_metadata_info, format_metadata_section
@@ -327,7 +327,11 @@ def check_is_done(content: str | List) -> bool:
     print(f"{__name__} - last message content:", content[:200])
     
     if isinstance(content, list):
-        content = "\n\n".join(content)
+        if len(content) > 0 and isinstance(content[0], dict):
+            msg_type = content[0].get("type", "") 
+            content = content[0][msg_type] if msg_type else ""
+        else:
+            content = "\n\n".join(str(item) for item in content)
 
     prompt_text = (
         "아래 ai_message는 ai agent가 생성한 텍스트입니다. 보고서 생성 완료 여부를 True or False로 판단하세요.\n"
@@ -336,18 +340,14 @@ def check_is_done(content: str | List) -> bool:
         "응답은 반드시 True 또는 False만 반환하세요."
     )
 
-    structured_llm = llm_medium.with_structured_output(bool)
+    structured_llm = llm_medium.with_structured_output(BooleanResponse)
     result = structured_llm.invoke([HumanMessage(content=prompt_text)])
 
     is_done = False
-    if isinstance(result, bool):
-        is_done = result
+    if isinstance(result, BooleanResponse):
+        is_done = result.is_done
     elif isinstance(result, dict):
-        bool_vals = [v for v in result.values() if isinstance(v, bool)]
-        if bool_vals:
-            is_done = bool_vals[0]
-        else:
-            is_done = str(result).strip().lower() in ("true", "yes", "1")
+        is_done = result.get("is_done", False)
     else:
         is_done = str(result).strip().lower() in ("true", "yes", "1")
     print(f"{__name__} - result: {is_done}")
